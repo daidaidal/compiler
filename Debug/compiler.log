@@ -1,0 +1,4 @@
+﻿  parser.cpp
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(27): warning C4553: “==”: 运算符不起任何作用；是否是有意使用“=”的?
+  compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
+  compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.pdb (Partial PDB)

@@ -1,0 +1,59 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<DEFECTS>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daisf\documents\cworkspace\compiler\compiler\</FILEPATH>
+      <FILENAME>lex.cpp</FILENAME>
+      <LINE>197</LINE>
+      <COLUMN>12</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>已将“char”作为 _Param_(1) 传递，但需要使用“unsigned char”来调用“isalpha”。</DESCRIPTION>
+    <FUNCTION>lex::token_scan</FUNCTION>
+    <DECORATED>?token_scan@lex@@QAEPAHXZ</DECORATED>
+    <FUNCLINE>172</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daisf\documents\cworkspace\compiler\compiler\</FILEPATH>
+      <FILENAME>lex.cpp</FILENAME>
+      <LINE>200</LINE>
+      <COLUMN>16</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>已将“char”作为 _Param_(1) 传递，但需要使用“unsigned char”来调用“isalnum”。</DESCRIPTION>
+    <FUNCTION>lex::token_scan</FUNCTION>
+    <DECORATED>?token_scan@lex@@QAEPAHXZ</DECORATED>
+    <FUNCLINE>172</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daisf\documents\cworkspace\compiler\compiler\</FILEPATH>
+      <FILENAME>lex.cpp</FILENAME>
+      <LINE>222</LINE>
+      <COLUMN>13</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>已将“char”作为 _Param_(1) 传递，但需要使用“unsigned char”来调用“isdigit”。</DESCRIPTION>
+    <FUNCTION>lex::token_scan</FUNCTION>
+    <DECORATED>?token_scan@lex@@QAEPAHXZ</DECORATED>
+    <FUNCLINE>172</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+  <DEFECT>
+    <SFA>
+      <FILEPATH>c:\users\daisf\documents\cworkspace\compiler\compiler\</FILEPATH>
+      <FILENAME>lex.cpp</FILENAME>
+      <LINE>225</LINE>
+      <COLUMN>17</COLUMN>
+    </SFA>
+    <DEFECTCODE>6330</DEFECTCODE>
+    <DESCRIPTION>已将“char”作为 _Param_(1) 传递，但需要使用“unsigned char”来调用“isdigit”。</DESCRIPTION>
+    <FUNCTION>lex::token_scan</FUNCTION>
+    <DECORATED>?token_scan@lex@@QAEPAHXZ</DECORATED>
+    <FUNCLINE>172</FUNCLINE>
+    <PATH></PATH>
+  </DEFECT>
+</DEFECTS>
