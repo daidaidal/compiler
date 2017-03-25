@@ -1,4 +1,4 @@
-#include "lex.h"
+/*#include "lex.h"
 #include <iostream>
 using namespace std;
 void main()
@@ -8,3 +8,4 @@ void main()
 	cout << "词法分析到此结束" << endl;
 	return;
 }
+*/
