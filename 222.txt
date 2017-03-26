@@ -6,7 +6,7 @@ primary_expression
 	;
 
 constant
-	: I_CONSTANT		/* includes character_constant */
+	: I_CONSTANT
 	| F_CONSTANT
 	;
 
@@ -177,7 +177,7 @@ type_specifier
 	| UNSIGNED
 	| BOOL
 	| COMPLEX
-	| TYPEDEF_NAME		/* after it has been defined as such */
+	| TYPEDEF_NAME
 	;
 
 specifier_qualifier_list
