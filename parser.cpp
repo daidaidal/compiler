@@ -3,6 +3,7 @@
 #include <map>
 #include <stack>
 #include <set>
+#include <list>
 #define BUFFERSIZE 10000
 
 using namespace std;
@@ -12,10 +13,22 @@ set<string> already_in_first;//已经用调用过make_first的string
 typedef multimap<string, node*>::iterator sn_it;
 typedef map<string, set<string>>::iterator ss_it;
 typedef set<string>::iterator set_it;
+set<string> in_recalculate; //判断是否加入过recalculate
+list<string> recalculate;
 char *buffer = new char[BUFFERSIZE];
 int colon_judge = 0;
 int buffer_count = 0;
 int state_count = 0;
+int judge_first_count = 0;
+int judge_end = 0;
+int judge_count = 0;
+//string init_word = "s0";   //postfix_expression
+//string file_name="temp.txt";  //postfix_expression
+
+//string init_word = "S";  
+string init_word = "declaration_list";  
+string file_name = "222.txt";  
+
 multimap<string, node*> state_map[100]; //有可能不是拷贝而是引用地址，需验证
 node *start = new node("", "");
 node *p = NULL;
@@ -74,8 +87,7 @@ void standardize()
 	int count = 0;//记录第多少个节点
 	p = start;
 	ifstream in;
-	string filename;
-	in.open("temp.txt");
+	in.open(file_name);
 	if (!in)
 	{
 		cout << "open error" << endl;
@@ -98,102 +110,185 @@ set<string> make_first(string s)
 {
 	//终结符号表
 	//如果找不到别的以他为首字母的就是终结符
+	if (in_recalculate.find(s) == in_recalculate.end()) //如果加入过recalculate
+	{
+		in_recalculate.insert(s);
+		recalculate.push_front(s);
+	}
 	already_in_first.insert(s);
 	ss_it f_s = first_set.find(s);
-	if (f_s == first_set.end())
-	{
-		set<string> ret;
-		ret.insert(s);
-		return ret;
-	}
 	pair<sn_it, sn_it> f = a.equal_range(s);
 	for (sn_it k = f.first; k != f.second; k++)
 	{
 		//把每个的第一个加进去,如果可能出现空的话就把后面的加进去 while(1) if 通过string 剔除第一个 第二个 。。第 n个
-		string first = k->second->p.substr(k->second->p.find("@") + 1, k->second->p.find(" ", k->second->p.find("@"))-1);
+		string first = k->second->p.substr(k->second->p.find("@") + 1, k->second->p.find(" ", k->second->p.find("@")) - 1);
 		//cout << "first_word:" << first << 111 << endl;
-		if (already_in_first.find(first) != already_in_first.end())
+		set<string> temp;
+		if (first_set.find(first) == first_set.end())
+		{
+			f_s->second.insert(first);
 			continue;
-		set<string> temp = make_first(first);
-		for (set_it m = temp.begin(); m != temp.end(); m++)
-			f_s->second.insert(*m);
+		}
+		if (already_in_first.find(first) != already_in_first.end()) //如果已经算过make_first(first)
+		{
+			//需要重新进行计算的
+			if (judge_first_count == 0)
+			{
+				if (in_recalculate.find(first) != in_recalculate.end())//如果加入过recalculate
+					continue;
+				in_recalculate.insert(first);
+				recalculate.push_front(first);
+			}
+			else
+			{
+				ss_it temp_it = first_set.find(first);
+				int before = f_s->second.size();
+				f_s->second.insert(temp_it->second.begin(), temp_it->second.end());
+				if (f_s->second.size() > before)
+					judge_end = 1;
+			}
+			continue;
+		}
+		temp = make_first(first);
+		f_s->second.insert(temp.begin(), temp.end());
 	}
 	return f_s->second;
 }
-
+void first()
+{
+	//make_first(init_word); //初始化
+	ss_it l;
+	for (l = first_set.begin(); l != first_set.end(); l++)
+		make_first(l->first);
+	judge_first_count = 1; //跳过内部形成栈代码
+	while (1)
+	{
+		judge_end = 0;
+		for (list<string>::iterator ttt = recalculate.begin(); ttt != recalculate.end(); ttt++)
+			make_first(*ttt);
+		if (judge_end == 0)
+			break;
+	}
+}
 void closure(node* n)
 {
 	//闭包map
 	multimap<string, node*> temp_map;
-	stack<node*> stackl;
+	list<node*> stackl;
 	set<string> setl; //用来检验是否已经求过闭包
-	stackl.push(n); 
+	stackl.push_back(n);
 	//setl.insert(n->s);
+	temp_map.insert(pair<string, node*>(n->s,n));
+	set<string> insert_symbol;
 	while (!stackl.empty())
 	{
-		node * n = stackl.top();
+		node * n = stackl.front();
 		//如果以前求过以n->s为 头的闭包
-
 		//求搜索符号集
-		set<string> insert_symbol;
 		//将n加到map中
-		temp_map.insert(pair<string, node*>(n->s, n));
-		stackl.pop();
-		string first = n->p.substr(n->p.find("@") + 1, n->p.find(" ", n->p.find("@"))-1);
-		string second;
-		if (n->p.find(" ", n->p.find("@")) == -1)
-			insert_symbol = n->symbol;
+		insert_symbol.clear();
+		stackl.pop_front();
+		int at = 0;
+		at = n->p.find("@");
+		string first = "";
+		int i = 0;
+		int judge_cc = 0; //检验后面是否有终结符或非终结符
+		for (i = at + 1; i < n->p.size(); i++)
+		{
+			if (n->p.at(i) == ' ')
+			{
+				judge_cc = 1;
+				break;
+			}
+			first = first + n->p.at(i);
+		}
+		if (first == "")
+			continue;
+		if (first_set.find(first) == first_set.end())
+			continue;
+
+		string second = "";
+		if (judge_cc == 0) //如果后面没有非终结符
+			insert_symbol.insert(n->symbol.begin(), n->symbol.end());
 		else
 		{
-			second = n->p.substr(n->p.find(" ", n->p.find("@")) + 1, n->p.find(" ", n->p.find(" ", n->p.find("@"))));
+			at = n->p.find(" ", n->p.find("@"));
+			for (int i = at + 1; i < n->p.size(); i++)
+			{
+				if (n->p.at(i) == ' ')
+					break;
+				second = second + n->p.at(i);
+			}
 			ss_it first_second = first_set.find(second);
-			if (first_second != first_set.end())
+			if (first_second != first_set.end()) //如果是非终结符
 			{
 				set<string>::iterator set_it;
-				for (set_it = first_second->second.begin(); set_it != first_second->second.end(); set_it++)
-					insert_symbol.insert(*set_it);
+				insert_symbol.insert(first_second->second.begin(), first_second->second.end());
 			}
-			else
+			else //如果是终结符
 				insert_symbol.insert(second);
 		}
 
-		if (first == "")
-			continue;
-		if (setl.find(first) == setl.end())
+
+		if (setl.find(first) == setl.end()) 
+		//if(temp_map.find(first)==temp_map.end())//如果还没求过闭包 =====可以提前验证减少运算
 		{
+			cout << "first://" << first << endl;
 			pair<sn_it, sn_it> ret = a.equal_range(first);
 			setl.insert(first);
 			for (sn_it k = ret.first; k != ret.second; k++)
 			{
 				//J=J∪{[B→.η,b]|[A→α.Bβ,a]∈J, b∈FIRST(βa)}	
-				node * temp_n = k->second;
-				temp_n->symbol=insert_symbol;//把insert_symbol和temp_n->symbol合并即可
-				stackl.push(temp_n);
+				node * temp_n = k->second; //
+				temp_n->symbol.insert(insert_symbol.begin(), insert_symbol.end());//把insert_symbol和temp_n->symbol合并即可
+				stackl.push_back(temp_n);
+				temp_map.insert(pair<string, node*>(temp_n->s, temp_n));
 			}
+		}
+		else //如果temp_map中有first
+		{
+			int before;
+			pair<sn_it,sn_it> find_first=temp_map.equal_range(first);
+			sn_it judge = find_first.first;
+			set<string> tryl;
+			tryl = judge->second->symbol;
+			before = tryl.size();
+
+			tryl.insert(insert_symbol.begin(),insert_symbol.end());
+
+			if (tryl.size() > before)
+				for (sn_it j = find_first.first; j != find_first.second; j++)
+				{
+					j->second->symbol.insert(tryl.begin(), tryl.end());
+					stackl.push_back(j->second);
+					judge_count++;
+					cout << judge_count << endl;
+				}
 		}
 	}
 	state_map[state_count] = temp_map;
 	state_count++;
-}
 
+}
 
 void main()
 {
 	standardize();
-	make_first("A");
+	first();
+	/*
 	for (ss_it lll = first_set.begin(); lll != first_set.end(); lll++)
 		if (lll->second.size() == 0)
 			make_first(lll->first);
-	pair<sn_it, sn_it> g = a.equal_range("A");
+	*/
+	pair<sn_it, sn_it> g = a.equal_range(init_word);
 	cout<<"标准化："<<endl;
 	for (sn_it lll = a.begin(); lll != a.end(); lll++)
 		cout << lll->first << "->" << lll->second->p << endl;
 	//给最初表达式初始化搜索符号
 	for (sn_it temp = g.first; temp != g.second; temp++)
-	{
 		temp->second->symbol.insert("#");
+	for (sn_it temp = g.first; temp != g.second; temp++)
 		closure(temp->second);
-	}
 	
 	cout << endl << "closure" << endl;
 	for (int i = 0; i < state_count; i++)
@@ -221,7 +316,7 @@ void main()
 	
 	/*
 	pair<it, it> ret = n->p.equal_range("primary_expression");
-	for (it k = ret.first; k != ret.second; k++)
+	for (it k = ret.first; k != ret.second; k++) 
 	{
 		cout << k->second->p << endl;
 		k->second->p = "hahahaha";
@@ -232,5 +327,7 @@ void main()
 }
 /*问题
 1.state_count
-2.state_map非终结符数量和first_set非终结符数量不一致*/
+2.state_map非终结符数量和first_set非终结符数量不一致
+3.与书上p187用例不符*/
+
 

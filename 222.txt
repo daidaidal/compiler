@@ -1,3 +1,7 @@
+S
+	declaration_list
+	;
+	
 primary_expression
 	: IDENTIFIER
 	| constant
