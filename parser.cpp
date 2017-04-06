@@ -15,6 +15,9 @@ typedef map<string, set<string>>::iterator ss_it;
 typedef set<string>::iterator set_it;
 set<string> in_recalculate; //判断是否加入过recalculate
 list<string> recalculate;
+map<string, int> q_string_int;
+map<int, string> q_int_string;
+int int_string_count = 0;
 char *buffer = new char[BUFFERSIZE];
 int colon_judge = 0;
 int buffer_count = 0;
@@ -22,12 +25,12 @@ int state_count = 0;
 int judge_first_count = 0;
 int judge_end = 0;
 int judge_count = 0;
-//string init_word = "s0";   //postfix_expression
-//string file_name="temp.txt";  //postfix_expression
+string init_word = "s0";   //postfix_expression
+string file_name="temp.txt";  //postfix_expression
 
 //string init_word = "S";  
-string init_word = "declaration_list";  
-string file_name = "222.txt";  
+//string init_word = "declaration_list";  
+//string file_name = "222.txt";  
 
 multimap<string, node*> state_map[100]; //有可能不是拷贝而是引用地址，需验证
 node *start = new node("", "");
@@ -73,6 +76,10 @@ int s()
 		}
 		buffer_count++;
 		//新建节点
+		int_string_count++;
+		q_string_int.insert(pair<string,int>(s + "->" + p, int_string_count));
+		q_int_string.insert(pair<int, string>(int_string_count, s + "->" + p));
+
 		p = '@' + p;
 		start->next = new node(s, p);
 		start = start->next;
