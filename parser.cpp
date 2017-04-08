@@ -4,20 +4,23 @@
 #include <stack>
 #include <set>
 #include <list>
+#include <iostream>
 #define BUFFERSIZE 10000
 
 using namespace std;
-multimap<string, node*> a; //最开始的状态集
-map<string, set<string>> first_set; //first集合
-set<string> already_in_first;//已经用调用过make_first的string
 typedef multimap<string, node*>::iterator sn_it;
 typedef map<string, set<string>>::iterator ss_it;
 typedef set<string>::iterator set_it;
+typedef map<string, set<node*>>::iterator sset_it;
+multimap<string, node*> a; //最开始的状态集
+map<string, set<string>> first_set; //first集合
+set<string> already_in_first;//已经用调用过make_first的string
 set<string> in_recalculate; //判断是否加入过recalculate
 list<string> recalculate;
 map<string, int> q_string_int;
 map<int, string> q_int_string;
 int int_string_count = 0;
+map<string, string>go;
 char *buffer = new char[BUFFERSIZE];
 int colon_judge = 0;
 int buffer_count = 0;
@@ -25,6 +28,7 @@ int state_count = 0;
 int judge_first_count = 0;
 int judge_end = 0;
 int judge_count = 0;
+
 string init_word = "s0";   //postfix_expression
 string file_name="temp.txt";  //postfix_expression
 
@@ -32,7 +36,8 @@ string file_name="temp.txt";  //postfix_expression
 //string init_word = "declaration_list";  
 //string file_name = "222.txt";  
 
-multimap<string, node*> state_map[100]; //有可能不是拷贝而是引用地址，需验证
+multimap<string, node*> state_map[1000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
+set<string> check_in_state[1000];
 node *start = new node("", "");
 node *p = NULL;
 //标准化处理
@@ -177,15 +182,21 @@ void first()
 			break;
 	}
 }
-void closure(node* n)
+int closure(set<node*> input_set)
 {
 	//闭包map
 	multimap<string, node*> temp_map;
 	list<node*> stackl;
 	set<string> setl; //用来检验是否已经求过闭包
-	stackl.push_back(n);
-	//setl.insert(n->s);
-	temp_map.insert(pair<string, node*>(n->s,n));
+
+	for (set<node*>::iterator it_temp = input_set.begin(); it_temp != input_set.end(); it_temp++)
+	{
+		node * temp = *it_temp;
+		node * new_temp = new node(temp->s, temp->p);
+		new_temp->insert_symbol(temp->symbol);
+		stackl.push_back(*it_temp);
+		temp_map.insert(pair<string, node*>(new_temp->s, new_temp));
+	}
 	set<string> insert_symbol;
 	while (!stackl.empty())
 	{
@@ -237,8 +248,8 @@ void closure(node* n)
 		}
 
 
-		if (setl.find(first) == setl.end()) 
-		//if(temp_map.find(first)==temp_map.end())//如果还没求过闭包 =====可以提前验证减少运算
+		if (setl.find(first) == setl.end())
+			//if(temp_map.find(first)==temp_map.end())//如果还没求过闭包 =====可以提前验证减少运算
 		{
 			cout << "first://" << first << endl;
 			pair<sn_it, sn_it> ret = a.equal_range(first);
@@ -247,21 +258,23 @@ void closure(node* n)
 			{
 				//J=J∪{[B→.η,b]|[A→α.Bβ,a]∈J, b∈FIRST(βa)}	
 				node * temp_n = k->second; //
-				temp_n->symbol.insert(insert_symbol.begin(), insert_symbol.end());//把insert_symbol和temp_n->symbol合并即可
-				stackl.push_back(temp_n);
-				temp_map.insert(pair<string, node*>(temp_n->s, temp_n));
+				node * new_temp_n=new node(temp_n->s, temp_n->p);
+				new_temp_n->insert_symbol(temp_n->symbol);
+				new_temp_n->insert_symbol(insert_symbol);//把insert_symbol和temp_n->symbol合并即可
+				stackl.push_back(new_temp_n);
+				temp_map.insert(pair<string, node*>(new_temp_n->s,new_temp_n));
 			}
 		}
 		else //如果temp_map中有first
 		{
 			int before;
-			pair<sn_it,sn_it> find_first=temp_map.equal_range(first);
+			pair<sn_it, sn_it> find_first = temp_map.equal_range(first);
 			sn_it judge = find_first.first;
 			set<string> tryl;
 			tryl = judge->second->symbol;
 			before = tryl.size();
 
-			tryl.insert(insert_symbol.begin(),insert_symbol.end());
+			tryl.insert(insert_symbol.begin(), insert_symbol.end());
 
 			if (tryl.size() > before)
 				for (sn_it j = find_first.first; j != find_first.second; j++)
@@ -273,13 +286,166 @@ void closure(node* n)
 				}
 		}
 	}
-	state_map[state_count] = temp_map;
 	state_count++;
+	state_map[state_count] = temp_map;
+	return state_count;
+}
 
+int find(string s)
+{
+	int i1=-1;
+	for (int i = 1; i <= state_count; i++)
+		if (check_in_state[i].find(s) != check_in_state[i].end())
+		{
+			i1 = i;
+			if (check_in_state[i].size() == 1)
+				return i;
+		}
+	return i1;
+}
+
+void make_list(set<node*>input_set)
+{
+	list<set<node*>> listl;
+	listl.push_back(input_set);
+	//
+	while (1)
+	{
+		if (listl.size()==0)
+			break;
+		cout << listl.size() << endl;
+		set<node*> init_set = listl.front();
+		listl.pop_front();
+		set<node*> setll;
+		setll.clear();
+		for (set<node*>::iterator lgg = init_set.begin(); lgg != init_set.end(); lgg++)
+		{
+			node * l = *lgg;
+			string sl = l->s + "->" + l->p;
+			for (set<string>::iterator lll = l->symbol.begin(); lll != l->symbol.end(); lll++)
+				sl = sl + *lll;
+			int findll = find(sl);
+			if (findll == -1 || (findll != -1 && l->p.at(l->p.length()-1)=='@' && state_map[findll].size() != 1))
+				setll.insert(l);
+		}
+		//
+		if (setll.empty())
+			continue;
+
+		map<string, set<node*>> zhuanyibiao;
+		zhuanyibiao.clear();
+		int state_countl = closure(setll);
+
+		for (sn_it temp_it = state_map[state_countl].begin(); temp_it != state_map[state_countl].end(); temp_it++)
+		{
+			node * temp = temp_it->second;
+			string temps = "";
+			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+				temps = temps + *temp2;
+			check_in_state[state_countl].insert(temp->s + "->" + temp->p + temps);
+
+			string s = temp->p;
+			int at = s.find("@");
+			s.at(at) = ' ';
+			int check = 0;
+			string zhuanyifu = "";
+			for (int i = at + 1; i < s.length(); i++)
+				if (s.at(i) == ' ')
+				{
+					s.at(i) = '@';
+					check = 1;
+					break;
+				}
+				else
+					zhuanyifu = zhuanyifu + s.at(i);
+			if (at == 0)
+				s = s.substr(1);
+			if (zhuanyifu == "")
+				continue;
+			if (check == 0)
+				s = s + '@';
+
+			//
+			int findl = find(temp->s + "->" + s + temps);
+			if (findl == -1 || (findl!=-1 && check == 0 && state_map[findl].size() != 1))
+			{
+				sset_it diedai = zhuanyibiao.find(zhuanyifu);
+				node * temp_node = new node(temp->s, s);
+				temp_node->insert_symbol(temp->symbol);
+				if (diedai == zhuanyibiao.end())
+				{
+					set<node*> temp_set;
+					temp_set.insert(temp_node);
+					zhuanyibiao.insert(pair<string, set<node*>>(zhuanyifu, temp_set));
+				}
+				else
+					diedai->second.insert(temp_node);
+			}
+			
+
+		}
+		//
+		for (sset_it gg = zhuanyibiao.begin(); gg != zhuanyibiao.end(); gg++)
+			listl.push_back(gg->second);
+
+	}
+	return;
+}
+
+void make_list2()
+{
+	int state_count_temp = 1;
+	while (state_count_temp <= state_count)
+	{
+		for (sn_it temp_it = state_map[state_count_temp].begin(); temp_it != state_map[state_count_temp].end(); temp_it++)
+		{
+			node * temp = temp_it->second;
+			string temps = "";
+			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+				temps = temps + *temp2;
+			check_in_state[state_count_temp].insert(temp->s + "->" + temp->p + temps);
+
+			string s = temp->p;
+			int at = s.find("@");
+			s.at(at) = ' ';
+			int check = 0;
+			string zhuanyifu = "";
+			for (int i = at + 1; i < s.length(); i++)
+				if (s.at(i) == ' ')
+				{
+					s.at(i) = '@';
+					check = 1;
+					break;
+				}
+				else
+					zhuanyifu = zhuanyifu + s.at(i);
+			if (at == 0)
+				s = s.substr(1);
+			
+
+
+			if (zhuanyifu == "")//规约
+			{
+				s.replace(s.length() - 1, 1, "");
+				int ll = q_string_int[temp->s + "->" + s];
+				for(set<string>::iterator lg = temp->symbol.begin();lg!=temp->symbol.end();lg++)
+					go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+			}
+			else
+			{
+				if (check == 0)
+					s = s + '@';
+				int findl = find(temp->s + "->" + s + temps);
+				go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + zhuanyifu, "" + to_string(findl)));
+			}
+		}
+		state_count_temp++;
+	}
 }
 
 void main()
 {
+	set<node*>input_set_init;
 	standardize();
 	first();
 	/*
@@ -295,13 +461,14 @@ void main()
 	for (sn_it temp = g.first; temp != g.second; temp++)
 		temp->second->symbol.insert("#");
 	for (sn_it temp = g.first; temp != g.second; temp++)
-		closure(temp->second);
-	
+		input_set_init.insert(temp->second);
+	make_list(input_set_init);
+	make_list2();
 	cout << endl << "closure" << endl;
-	for (int i = 0; i < state_count; i++)
+	for (int i = 1; i <= state_count; i++)
 	{
-		state_map[i];
-		for (sn_it ii = state_map[0].begin(); ii != state_map[0].end(); ii++)
+		cout << "closure:" << i << endl;
+		for (sn_it ii = state_map[i].begin(); ii != state_map[i].end(); ii++)
 		{
 			string sss="///";
 			set<string>::iterator mmm;
@@ -309,7 +476,7 @@ void main()
 				sss = sss + " " + *mmm;
 			cout << ii->second->s << "->" << ii->second->p << "  " << sss << endl;
 		}
-
+		cout << endl;
 	}
 	
 	cout << endl << "first:" << endl;

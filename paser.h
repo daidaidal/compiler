@@ -15,5 +15,9 @@ public:
 		this->s = s;
 		this->p = p;
 	}
+	void insert_symbol(set<string>symbol)
+	{
+		this->symbol.insert(symbol.begin(), symbol.end());
+	}
 
 };
