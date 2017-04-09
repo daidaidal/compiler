@@ -28,12 +28,15 @@ int state_count = 0;
 int judge_first_count = 0;
 int judge_end = 0;
 int judge_count = 0;
+int judgecount = 0; //试验文法后删除
 
-string init_word = "s0";   //postfix_expression
-string file_name="temp.txt";  //postfix_expression
+//string init_word = "s0";   //postfix_expression
+//string file_name="temp.txt";  //postfix_expression
+
+string init_word = "s";   //postfix_expression
+string file_name = "mywenfa.txt";  //postfix_expression
 
 //string init_word = "S";  
-//string init_word = "declaration_list";  
 //string file_name = "222.txt";  
 
 multimap<string, node*> state_map[1000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
@@ -61,7 +64,7 @@ int s()
 	while (1)
 	{
 		string p = "";
-		while (!(isalnum(buffer[buffer_count]) || buffer[buffer_count] == '\''))
+		while (!(isalnum(buffer[buffer_count]) || buffer[buffer_count] == '\'' || buffer[buffer_count] == '\"'))
 		{
 			if (buffer[buffer_count] == EOF)
 				return 0;
@@ -392,6 +395,118 @@ void make_list(set<node*>input_set)
 	return;
 }
 
+int find_all(set<node*> ll)
+{
+	map<int, int> who_is_more;
+	for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
+	{
+		node * temp = *gg;
+		string temps = "";
+		for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+			temps = temps + *temp2;
+		if (ll.size() == 1)
+			return find(temp->s + "->" + temp->p + temps);
+		for (int i = 1; i <= state_count; i++)
+			if (check_in_state[i].find(temp->s + "->" + temp->p + temps) != check_in_state[i].end())
+			{
+				map<int, int>::iterator findll = who_is_more.find(i);
+				if (findll == who_is_more.end())
+					who_is_more.insert(pair<int, int>(i, 1));
+				else
+				{
+					findll->second++;
+					if (findll->second == ll.size())
+						return findll->first;
+				}
+			}
+	}
+	return 1;
+}
+
+void make_list3()
+{
+	int state_count_temp = 1;
+	while (state_count_temp <= state_count)
+	{
+		map<string, set<node*>> zhuanyibiao;
+		zhuanyibiao.clear();
+		string zhuanyifu = "";
+		int findl;
+		for (sn_it temp_it = state_map[state_count_temp].begin(); temp_it != state_map[state_count_temp].end(); temp_it++)
+		{
+			node * temp = temp_it->second;
+			string temps = "";
+			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+				temps = temps + *temp2;
+
+			string s = temp->p;
+			int at = s.find("@");
+			s.at(at) = ' ';
+			int check = 0;
+			zhuanyifu = "";
+			for (int i = at + 1; i < s.length(); i++)
+				if (s.at(i) == ' ')
+				{
+					s.at(i) = '@';
+					check = 1;
+					break;
+				}
+				else
+					zhuanyifu = zhuanyifu + s.at(i);
+			if (at == 0)
+				s = s.substr(1);
+
+			if (zhuanyifu == "")//规约
+			{
+				s.replace(s.length() - 1, 1, "");
+				int ll = q_string_int[temp->s + "->" + s];
+				for (set<string>::iterator lg = temp->symbol.begin(); lg != temp->symbol.end(); lg++)
+				{
+					map<string, string>::iterator judgegg;
+					judgegg = go.find("" + to_string(state_count_temp) + " " + *lg);
+					if (judgegg != go.end())
+						if (judgegg->second != "r" + to_string(ll))
+							judgecount++;
+					go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+				}
+
+			}
+			else
+			{
+				if (check == 0)
+					s = s + '@';
+				findl = find(temp->s + "->" + s + temps);
+
+				map<string, string>::iterator judgegg;
+				judgegg = go.find("" + to_string(state_count_temp) + " " + zhuanyifu);
+				if (judgegg != go.end())
+					if (judgegg->second != "" + to_string(findl))
+						judgecount++;
+
+
+				sset_it diedai = zhuanyibiao.find(zhuanyifu);
+				node * temp_node = new node(temp->s, s);
+				temp_node->insert_symbol(temp->symbol);
+				if (diedai == zhuanyibiao.end())
+				{
+					set<node*> temp_set;
+					temp_set.insert(temp_node);
+					zhuanyibiao.insert(pair<string, set<node*>>(zhuanyifu, temp_set));
+				}
+				else
+					diedai->second.insert(temp_node);
+
+			}
+		}
+		for (sset_it gg = zhuanyibiao.begin(); gg != zhuanyibiao.end(); gg++)
+		{
+			int all = find_all(gg->second);
+			go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + gg->first, "" + to_string(all)));
+		}
+		state_count_temp++;
+	}
+}
+
 void make_list2()
 {
 	int state_count_temp = 1;
@@ -403,7 +518,6 @@ void make_list2()
 			string temps = "";
 			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
 				temps = temps + *temp2;
-			check_in_state[state_count_temp].insert(temp->s + "->" + temp->p + temps);
 
 			string s = temp->p;
 			int at = s.find("@");
@@ -428,14 +542,29 @@ void make_list2()
 			{
 				s.replace(s.length() - 1, 1, "");
 				int ll = q_string_int[temp->s + "->" + s];
-				for(set<string>::iterator lg = temp->symbol.begin();lg!=temp->symbol.end();lg++)
-					go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+				for (set<string>::iterator lg = temp->symbol.begin(); lg != temp->symbol.end(); lg++)
+				{
+					map<string, string>::iterator judgegg;
+					judgegg = go.find("" + to_string(state_count_temp) + " " + *lg);
+					if (judgegg != go.end())
+						if(judgegg->second!= "r" + to_string(ll))
+							judgecount++;
+					go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+				}
+
 			}
 			else
 			{
 				if (check == 0)
 					s = s + '@';
 				int findl = find(temp->s + "->" + s + temps);
+
+				map<string, string>::iterator judgegg;
+				judgegg = go.find("" + to_string(state_count_temp) + " " + zhuanyifu);
+				if (judgegg != go.end())
+					if (judgegg->second != "" + to_string(findl))
+						judgecount++;
+					
 				go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + zhuanyifu, "" + to_string(findl)));
 			}
 		}
@@ -463,7 +592,7 @@ void main()
 	for (sn_it temp = g.first; temp != g.second; temp++)
 		input_set_init.insert(temp->second);
 	make_list(input_set_init);
-	make_list2();
+	make_list3();
 	cout << endl << "closure" << endl;
 	for (int i = 1; i <= state_count; i++)
 	{

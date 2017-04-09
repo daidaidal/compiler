@@ -1,0 +1,126 @@
+s
+	type main '(' ')' codeblockplus
+	;
+
+
+codeblockplus
+	'{' codeblock '}'
+	;
+	
+codeblock
+	statement
+	codeblock statement
+	;
+	
+statement
+	null_statement
+	assign_statement ';'
+	declare_statement ';'
+	assign_declare ';'
+	control_statement
+	
+null_statement
+	';'
+	;
+
+assign_statement
+	id '=' math_statement
+	;
+
+declare_statement
+	type multi_id
+	;
+
+multi_id
+	mutiid ',' id
+	id
+	;
+
+assign_declare
+	type multi_assign
+	;
+	
+multi_assign
+	multi_assign ',' assign_statement
+	assign_statement
+	;
+	
+math_statement
+	math_item
+	math_statement '+' math_item
+	math_statement '-' math_item
+	;
+
+math_item
+	math_basic
+	math_item '*' math_basic
+	math_item '/' math_basic
+	;
+
+math_basic
+	id
+	num
+	'(' math_statement ')'
+	;
+	
+logic_statement
+	logic_mid
+	logic_statement or  logic_mid
+	;
+
+logic_mid
+	logic_basic
+	'!' logic_mid
+	logic_basic and logic_mid
+	;
+	
+logic_basic
+	math_statement
+	logic_basic logic_op math_statement
+	;
+	
+logic_op
+	not_smaller
+	not_bigger
+	equal_to
+	not_equal
+	;
+	
+control_statement
+	if_statement
+	while_statement
+	for_statement
+	;
+	
+if_statement
+	if '(' logic_statement ')' codeblockplus
+	if '(' logic_statement ')' codeblockplus elseif_statement
+	if '(' logic_statement ')' codeblockplus elseif_statement else_statement
+	if '(' logic_statement ')' codeblockplus else_statement
+	;
+
+elseif_statement
+	elseif '(' logic_statement ')' codeblockplus
+	elseif_statement elseif '(' logic_statement ')' codeblockplus
+	;
+	
+else_statement
+	else codeblockplus
+	;
+
+while_statement
+	while '(' logic_statement ')' codeblockplus
+	;
+
+for_statement
+	for '(' assign_statement ';' logic_statement ';' assign_statement ')' codeblockplus
+	for '(' ';' logic_statement ';' assign_statement ')' codeblockplus
+	for '(' assign_statement ';' ';' assign_statement ')' codeblockplus
+	for '(' assign_statement ';' logic_statement ';' ')' codeblockplus
+	for '(' assign_statement ';' ';' ')' codeblockplus
+	for '(' ';' logic_statement ';' ')' codeblockplus
+	for '(' ';' ';' assign_statement ')' codeblockplus
+	for '('';' ';' ')' codeblockplus
+	;
+	
+
