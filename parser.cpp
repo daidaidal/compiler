@@ -136,8 +136,15 @@ set<string> make_first(string s)
 	for (sn_it k = f.first; k != f.second; k++)
 	{
 		//把每个的第一个加进去,如果可能出现空的话就把后面的加进去 while(1) if 通过string 剔除第一个 第二个 。。第 n个
-		string first = k->second->p.substr(k->second->p.find("@") + 1, k->second->p.find(" ", k->second->p.find("@")) - 1);
-		//cout << "first_word:" << first << 111 << endl;
+		int at = k->second->p.find("@");
+		//string first = k->second->p.substr(at + 1, k->second->p.find(" ", at) - 1);
+		string first = "";
+		for (int lll = at + 1; lll < k->second->p.length(); lll++)
+		{
+			if (k->second->p.at(lll) == ' ')
+				break;
+			first = first + k->second->p.at(lll);
+		}
 		set<string> temp;
 		if (first_set.find(first) == first_set.end())
 		{
@@ -185,6 +192,7 @@ void first()
 			break;
 	}
 }
+
 int closure(set<node*> input_set)
 {
 	//闭包map
@@ -197,7 +205,7 @@ int closure(set<node*> input_set)
 		node * temp = *it_temp;
 		node * new_temp = new node(temp->s, temp->p);
 		new_temp->insert_symbol(temp->symbol);
-		stackl.push_back(*it_temp);
+		stackl.push_back(new_temp);
 		temp_map.insert(pair<string, node*>(new_temp->s, new_temp));
 	}
 	set<string> insert_symbol;
@@ -209,6 +217,7 @@ int closure(set<node*> input_set)
 		//将n加到map中
 		insert_symbol.clear();
 		stackl.pop_front();
+	
 		int at = 0;
 		at = n->p.find("@");
 		string first = "";
@@ -252,7 +261,6 @@ int closure(set<node*> input_set)
 
 
 		if (setl.find(first) == setl.end())
-			//if(temp_map.find(first)==temp_map.end())//如果还没求过闭包 =====可以提前验证减少运算
 		{
 			//cout << "first://" << first << endl;
 			pair<sn_it, sn_it> ret = a.equal_range(first);
@@ -282,6 +290,8 @@ int closure(set<node*> input_set)
 			if (tryl.size() > before)
 				for (sn_it j = find_first.first; j != find_first.second; j++)
 				{
+					if (j->second->p.at(0) != '@')
+						continue;
 					j->second->symbol.insert(tryl.begin(), tryl.end());
 					stackl.push_back(j->second);
 					//judge_count++;
@@ -507,83 +517,12 @@ void make_list3()
 	}
 }
 
-void make_list2()
-{
-	int state_count_temp = 1;
-	while (state_count_temp <= state_count)
-	{
-		for (sn_it temp_it = state_map[state_count_temp].begin(); temp_it != state_map[state_count_temp].end(); temp_it++)
-		{
-			node * temp = temp_it->second;
-			string temps = "";
-			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
-				temps = temps + *temp2;
-
-			string s = temp->p;
-			int at = s.find("@");
-			s.at(at) = ' ';
-			int check = 0;
-			string zhuanyifu = "";
-			for (int i = at + 1; i < s.length(); i++)
-				if (s.at(i) == ' ')
-				{
-					s.at(i) = '@';
-					check = 1;
-					break;
-				}
-				else
-					zhuanyifu = zhuanyifu + s.at(i);
-			if (at == 0)
-				s = s.substr(1);
-			
-
-
-			if (zhuanyifu == "")//规约
-			{
-				s.replace(s.length() - 1, 1, "");
-				int ll = q_string_int[temp->s + "->" + s];
-				for (set<string>::iterator lg = temp->symbol.begin(); lg != temp->symbol.end(); lg++)
-				{
-					map<string, string>::iterator judgegg;
-					judgegg = go.find("" + to_string(state_count_temp) + " " + *lg);
-					if (judgegg != go.end())
-						if(judgegg->second!= "r" + to_string(ll))
-							judgecount++;
-					go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
-				}
-
-			}
-			else
-			{
-				if (check == 0)
-					s = s + '@';
-				int findl = find(temp->s + "->" + s + temps);
-
-				map<string, string>::iterator judgegg;
-				judgegg = go.find("" + to_string(state_count_temp) + " " + zhuanyifu);
-				
-				if (judgegg != go.end())
-				{
-					if (judgegg->second != to_string(findl))
-						judgecount++;
-				}
-				go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + zhuanyifu, "" + to_string(findl)));
-			}
-		}
-		state_count_temp++;
-	}
-}
-
-void main()
+void main_paser()
 {
 	set<node*>input_set_init;
 	standardize();
 	first();
-	/*
-	for (ss_it lll = first_set.begin(); lll != first_set.end(); lll++)
-		if (lll->second.size() == 0)
-			make_first(lll->first);
-	*/
+
 	pair<sn_it, sn_it> g = a.equal_range(init_word);
 	cout<<"标准化："<<endl;
 	for (sn_it lll = a.begin(); lll != a.end(); lll++)
@@ -619,14 +558,6 @@ void main()
 			cout << *si << " ";
 	}
 	
-	/*
-	pair<it, it> ret = n->p.equal_range("primary_expression");
-	for (it k = ret.first; k != ret.second; k++) 
-	{
-		cout << k->second->p << endl;
-		k->second->p = "hahahaha";
-	}
-	*/
 	cout << endl;
 	return;
 }

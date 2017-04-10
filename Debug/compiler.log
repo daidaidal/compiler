@@ -1,10 +1,13 @@
 ﻿  parser.cpp
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(162): warning C4018: “>”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(217): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(237): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(282): warning C4018: “>”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(380): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(440): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(527): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(142): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(169): warning C4018: “>”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(226): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(246): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(290): warning C4018: “>”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(390): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(450): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\parser.cpp(537): warning C4018: “<”: 有符号/无符号不匹配
+  main.cpp
+  正在生成代码...
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.pdb (Partial PDB)

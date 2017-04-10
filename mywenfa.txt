@@ -18,6 +18,7 @@ statement
 	declare_statement ';'
 	assign_declare ';'
 	control_statement
+	;
 	
 null_statement
 	';'
