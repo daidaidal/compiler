@@ -39,8 +39,8 @@ string file_name = "mywenfa.txt";  //postfix_expression
 //string init_word = "S";  
 //string file_name = "222.txt";  
 
-multimap<string, node*> state_map[1000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
-set<string> check_in_state[1000];
+multimap<string, node*> state_map[10000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
+set<string> check_in_state[10000];
 node *start = new node("", "");
 node *p = NULL;
 //标准化处理
@@ -221,9 +221,9 @@ int closure(set<node*> input_set)
 				judge_cc = 1;
 				break;
 			}
-			first = first + n->p.at(i);
+			first = first + n->p.at(i); 
 		}
-		if (first == "")
+		if (first=="")
 			continue;
 		if (first_set.find(first) == first_set.end())
 			continue;
@@ -254,7 +254,7 @@ int closure(set<node*> input_set)
 		if (setl.find(first) == setl.end())
 			//if(temp_map.find(first)==temp_map.end())//如果还没求过闭包 =====可以提前验证减少运算
 		{
-			cout << "first://" << first << endl;
+			//cout << "first://" << first << endl;
 			pair<sn_it, sn_it> ret = a.equal_range(first);
 			setl.insert(first);
 			for (sn_it k = ret.first; k != ret.second; k++)
@@ -284,8 +284,8 @@ int closure(set<node*> input_set)
 				{
 					j->second->symbol.insert(tryl.begin(), tryl.end());
 					stackl.push_back(j->second);
-					judge_count++;
-					cout << judge_count << endl;
+					//judge_count++;
+					//cout << judge_count << endl;
 				}
 		}
 	}
@@ -307,6 +307,38 @@ int find(string s)
 	return i1;
 }
 
+int find_all(set<node*> ll)
+{
+	map<int, int> who_is_more;
+	for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
+	{
+		node * temp = *gg;
+		string temps = "";
+		for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+			temps = temps + *temp2;
+		if (ll.size() == 1)
+			return find(temp->s + "->" + temp->p + temps);
+		int lll = 0;
+		for (int i = 1; i <= state_count; i++)
+			if (check_in_state[i].find(temp->s + "->" + temp->p + temps) != check_in_state[i].end())
+			{
+				lll++;
+				map<int, int>::iterator findll = who_is_more.find(i);
+				if (findll == who_is_more.end())
+					who_is_more.insert(pair<int, int>(i, 1));
+				else
+				{
+					findll->second++;
+					if (findll->second == ll.size())
+						return findll->first;
+				}
+			}
+		if (lll == 0)
+			return -1;
+	}
+	return -2;
+}
+
 void make_list(set<node*>input_set)
 {
 	list<set<node*>> listl;
@@ -316,28 +348,21 @@ void make_list(set<node*>input_set)
 	{
 		if (listl.size()==0)
 			break;
-		cout << listl.size() << endl;
 		set<node*> init_set = listl.front();
 		listl.pop_front();
-		set<node*> setll;
-		setll.clear();
-		for (set<node*>::iterator lgg = init_set.begin(); lgg != init_set.end(); lgg++)
-		{
-			node * l = *lgg;
-			string sl = l->s + "->" + l->p;
-			for (set<string>::iterator lll = l->symbol.begin(); lll != l->symbol.end(); lll++)
-				sl = sl + *lll;
-			int findll = find(sl);
-			if (findll == -1 || (findll != -1 && l->p.at(l->p.length()-1)=='@' && state_map[findll].size() != 1))
-				setll.insert(l);
-		}
-		//
-		if (setll.empty())
-			continue;
+		int gggg = find_all(init_set);
 
 		map<string, set<node*>> zhuanyibiao;
 		zhuanyibiao.clear();
-		int state_countl = closure(setll);
+		int state_countl = closure(init_set);
+		if (gggg != -1 && gggg != -2)
+		{
+			if (state_map[gggg].size() == state_map[state_countl].size())
+			{
+				state_count--;
+				continue;
+			}
+		}
 
 		for (sn_it temp_it = state_map[state_countl].begin(); temp_it != state_map[state_countl].end(); temp_it++)
 		{
@@ -370,22 +395,18 @@ void make_list(set<node*>input_set)
 
 			//
 			int findl = find(temp->s + "->" + s + temps);
-			if (findl == -1 || (findl!=-1 && check == 0 && state_map[findl].size() != 1))
-			{
-				sset_it diedai = zhuanyibiao.find(zhuanyifu);
-				node * temp_node = new node(temp->s, s);
-				temp_node->insert_symbol(temp->symbol);
-				if (diedai == zhuanyibiao.end())
-				{
-					set<node*> temp_set;
-					temp_set.insert(temp_node);
-					zhuanyibiao.insert(pair<string, set<node*>>(zhuanyifu, temp_set));
-				}
-				else
-					diedai->second.insert(temp_node);
-			}
-			
 
+			sset_it diedai = zhuanyibiao.find(zhuanyifu);
+			node * temp_node = new node(temp->s, s);
+			temp_node->insert_symbol(temp->symbol);
+			if (diedai == zhuanyibiao.end())
+			{
+				set<node*> temp_set;
+				temp_set.insert(temp_node);
+				zhuanyibiao.insert(pair<string, set<node*>>(zhuanyifu, temp_set));
+			}
+			else
+				diedai->second.insert(temp_node);
 		}
 		//
 		for (sset_it gg = zhuanyibiao.begin(); gg != zhuanyibiao.end(); gg++)
@@ -393,34 +414,6 @@ void make_list(set<node*>input_set)
 
 	}
 	return;
-}
-
-int find_all(set<node*> ll)
-{
-	map<int, int> who_is_more;
-	for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
-	{
-		node * temp = *gg;
-		string temps = "";
-		for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
-			temps = temps + *temp2;
-		if (ll.size() == 1)
-			return find(temp->s + "->" + temp->p + temps);
-		for (int i = 1; i <= state_count; i++)
-			if (check_in_state[i].find(temp->s + "->" + temp->p + temps) != check_in_state[i].end())
-			{
-				map<int, int>::iterator findll = who_is_more.find(i);
-				if (findll == who_is_more.end())
-					who_is_more.insert(pair<int, int>(i, 1));
-				else
-				{
-					findll->second++;
-					if (findll->second == ll.size())
-						return findll->first;
-				}
-			}
-	}
-	return 1;
 }
 
 void make_list3()
@@ -458,16 +451,21 @@ void make_list3()
 
 			if (zhuanyifu == "")//规约
 			{
+				if (state_map[state_count_temp].size() != 1)
+					continue;
 				s.replace(s.length() - 1, 1, "");
-				int ll = q_string_int[temp->s + "->" + s];
+				map<string,int>::iterator lol = q_string_int.find(temp->s + "->" + s);
+				if (lol == q_string_int.end())
+					cout << "baozhala" << endl;
+				int ll = lol->second;
 				for (set<string>::iterator lg = temp->symbol.begin(); lg != temp->symbol.end(); lg++)
 				{
 					map<string, string>::iterator judgegg;
-					judgegg = go.find("" + to_string(state_count_temp) + " " + *lg);
+					judgegg = go.find(to_string(state_count_temp) + " " + *lg);
 					if (judgegg != go.end())
-						if (judgegg->second != "r" + to_string(ll))
+						//if (judgegg->second != "r" + to_string(ll))
 							judgecount++;
-					go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+					go.insert(pair<string, string>(to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
 				}
 
 			}
@@ -476,13 +474,6 @@ void make_list3()
 				if (check == 0)
 					s = s + '@';
 				findl = find(temp->s + "->" + s + temps);
-
-				map<string, string>::iterator judgegg;
-				judgegg = go.find("" + to_string(state_count_temp) + " " + zhuanyifu);
-				if (judgegg != go.end())
-					if (judgegg->second != "" + to_string(findl))
-						judgecount++;
-
 
 				sset_it diedai = zhuanyibiao.find(zhuanyifu);
 				node * temp_node = new node(temp->s, s);
@@ -500,8 +491,17 @@ void make_list3()
 		}
 		for (sset_it gg = zhuanyibiao.begin(); gg != zhuanyibiao.end(); gg++)
 		{
-			int all = find_all(gg->second);
-			go.insert(pair<string, string>("" + to_string(state_count_temp) + " " + gg->first, "" + to_string(all)));
+			int all = 0;
+			all = find_all(gg->second);
+			if (all == -1)
+				judgecount++;
+			
+			map<string, string>::iterator judgegg;
+			judgegg = go.find(to_string(state_count_temp) + " " + gg->first);
+			if (judgegg != go.end())
+				//if (judgegg->second != to_string(all))
+					judgecount++;
+			go.insert(pair<string, string>(to_string(state_count_temp) + " " + gg->first,to_string(all)));
 		}
 		state_count_temp++;
 	}
@@ -561,10 +561,12 @@ void make_list2()
 
 				map<string, string>::iterator judgegg;
 				judgegg = go.find("" + to_string(state_count_temp) + " " + zhuanyifu);
+				
 				if (judgegg != go.end())
-					if (judgegg->second != "" + to_string(findl))
+				{
+					if (judgegg->second != to_string(findl))
 						judgecount++;
-					
+				}
 				go.insert(pair<string, string>(""+to_string(state_count_temp) + " " + zhuanyifu, "" + to_string(findl)));
 			}
 		}
@@ -628,9 +630,3 @@ void main()
 	cout << endl;
 	return;
 }
-/*问题
-1.state_count
-2.state_map非终结符数量和first_set非终结符数量不一致
-3.与书上p187用例不符*/
-
-

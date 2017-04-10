@@ -32,7 +32,7 @@ declare_statement
 	;
 
 multi_id
-	mutiid ',' id
+	multi_id ',' id
 	id
 	;
 
@@ -65,7 +65,7 @@ math_basic
 	
 logic_statement
 	logic_mid
-	logic_statement or  logic_mid
+	logic_statement or logic_mid
 	;
 
 logic_mid
