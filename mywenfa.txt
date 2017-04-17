@@ -2,7 +2,16 @@ s
 	type main '(' ')' codeblockplus
 	;
 
+type
+	char_type
+	int_type
+	void_type
+	;
 
+matrix_id
+	id '[' int ']'
+	;
+	
 codeblockplus
 	'{' codeblock '}'
 	;
@@ -26,6 +35,7 @@ null_statement
 
 assign_statement
 	id '=' math_statement
+	matrix_id '=' math_statement
 	;
 
 declare_statement
@@ -34,7 +44,9 @@ declare_statement
 
 multi_id
 	multi_id ',' id
+	multi_id ',' matrix_id
 	id
+	matrix_id
 	;
 
 assign_declare
@@ -44,6 +56,7 @@ assign_declare
 multi_assign
 	multi_assign ',' assign_statement
 	assign_statement
+	multi_id
 	;
 	
 math_statement
@@ -56,11 +69,13 @@ math_item
 	math_basic
 	math_item '*' math_basic
 	math_item '/' math_basic
+	math_item '%' math_basic
 	;
 
 math_basic
 	id
-	num
+	matrix_id
+	int
 	'(' math_statement ')'
 	;
 	
@@ -71,19 +86,22 @@ logic_statement
 
 logic_mid
 	logic_basic
-	'!' logic_mid
+	not logic_mid
 	logic_basic and logic_mid
 	;
 	
 logic_basic
 	math_statement
 	logic_basic logic_op math_statement
+	'(' logic_statement ')'
 	;
 	
 logic_op
 	not_smaller
 	not_bigger
-	equal_to
+	bigger
+	smaller
+	equal
 	not_equal
 	;
 	
@@ -121,7 +139,5 @@ for_statement
 	for '(' assign_statement ';' ';' ')' codeblockplus
 	for '(' ';' logic_statement ';' ')' codeblockplus
 	for '(' ';' ';' assign_statement ')' codeblockplus
-	for '('';' ';' ')' codeblockplus
+	for '(' ';' ';' ')' codeblockplus
 	;
-	
-

@@ -1,108 +1,71 @@
 #include "paser.h"
-#include <fstream>
-#include <map>
-#include <stack>
-#include <set>
-#include <list>
-#include <iostream>
-#define BUFFERSIZE 10000
 
 using namespace std;
 typedef multimap<string, node*>::iterator sn_it;
 typedef map<string, set<string>>::iterator ss_it;
 typedef set<string>::iterator set_it;
 typedef map<string, set<node*>>::iterator sset_it;
-multimap<string, node*> a; //最开始的状态集
-map<string, set<string>> first_set; //first集合
-set<string> already_in_first;//已经用调用过make_first的string
-set<string> in_recalculate; //判断是否加入过recalculate
-list<string> recalculate;
-map<string, int> q_string_int;
-map<int, string> q_int_string;
-int int_string_count = 0;
-map<string, string>go;
-char *buffer = new char[BUFFERSIZE];
-int colon_judge = 0;
-int buffer_count = 0;
-int state_count = 0;
-int judge_first_count = 0;
-int judge_end = 0;
-int judge_count = 0;
-int judgecount = 0; //试验文法后删除
-
-//string init_word = "s0";   //postfix_expression
-//string file_name="temp.txt";  //postfix_expression
-
-string init_word = "s";   //postfix_expression
-string file_name = "mywenfa.txt";  //postfix_expression
-
-//string init_word = "S";  
-//string file_name = "222.txt";  
-
-multimap<string, node*> state_map[10000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
-set<string> check_in_state[10000];
-node *start = new node("", "");
-node *p = NULL;
+gloable_variablep *p = new gloable_variablep();
 //标准化处理
-int s()
+int parser::s()
 {
 	string s = "";
-	while (buffer[buffer_count] == ' ' || buffer[buffer_count] == '\t' || buffer[buffer_count] == '\n')
+	while (p->buffer[p->buffer_count] == ' ' || p->buffer[p->buffer_count] == '\t' || p->buffer[p->buffer_count] == '\n')
 	{
-		if (buffer[buffer_count] == EOF)
+		if (p->buffer[p->buffer_count] == EOF)
 			return 0;
-		buffer_count++;
+		p->buffer_count++;
 	}
-	while (isalnum(buffer[buffer_count]) || buffer[buffer_count] == '_')
+	while (isalnum(p->buffer[p->buffer_count]) || p->buffer[p->buffer_count] == '_')
 	{
-		if (buffer[buffer_count] == EOF) //
+		if (p->buffer[p->buffer_count] == EOF) //
 			return 0;
-		s = s + buffer[buffer_count];
-		buffer_count++;
+		s = s + p->buffer[p->buffer_count];
+		p->buffer_count++;
 	}
 	//string or char
 	while (1)
 	{
-		string p = "";
-		while (!(isalnum(buffer[buffer_count]) || buffer[buffer_count] == '\'' || buffer[buffer_count] == '\"'))
+		string ps = "";
+		while (!(isalnum(p->buffer[p->buffer_count]) || p->buffer[p->buffer_count] == '\'' || p->buffer[p->buffer_count] == '\"'))
 		{
-			if (buffer[buffer_count] == EOF)
+			if (p->buffer[p->buffer_count] == EOF)
 				return 0;
-			if (buffer[buffer_count] == ';')
+			if (p->buffer[p->buffer_count] == ';')
 			{
-				buffer_count++;
+				p->buffer_count++;
 				return 1;
 			}
-			buffer_count++;
+			p->buffer_count++;
 		}
-		while (buffer[buffer_count] != '\n')
+		while (p->buffer[p->buffer_count] != '\n')
 		{
-			if (buffer[buffer_count] == EOF)
+			if (p->buffer[p->buffer_count] == EOF)
 				return 0;
-			p = p + buffer[buffer_count];
-			buffer_count++;
+			ps = ps + p->buffer[p->buffer_count];
+			p->buffer_count++;
 		}
-		buffer_count++;
+		p->buffer_count++;
 		//新建节点
-		int_string_count++;
-		q_string_int.insert(pair<string,int>(s + "->" + p, int_string_count));
-		q_int_string.insert(pair<int, string>(int_string_count, s + "->" + p));
+		p->int_string_count++;
+		p->q_string_int.insert(pair<string,int>(s + "->" + ps, p->int_string_count));
+		p->q_int_string.insert(pair<int, string>(p->int_string_count, s + "->" + ps));
 
-		p = '@' + p;
-		start->next = new node(s, p);
-		start = start->next;
-		a.insert(pair<string, node*>(s, start));
+		ps = '@' + ps;
+		p->start->next = new node(s, ps);
+		p->start = p->start->next;
+		p->a.insert(pair<string, node*>(s, p->start));
 		set<string> y;
-		first_set.insert(pair<string,set<string>>(s, y)); //有可能连接着同一个y
+		p->first_set.insert(pair<string,set<string>>(s, y)); //有可能连接着同一个y
 	}
 	return 1;
 }
-void standardize()
+void parser::standardize()
 {
 	int count = 0;//记录第多少个节点
-	p = start;
+	p->pn = p->start;
 	ifstream in;
-	in.open(file_name);
+	in.open(p->file_name);
 	if (!in)
 	{
 		cout << "open error" << endl;
@@ -110,29 +73,29 @@ void standardize()
 	int sum_num = 0;
 	while (!in.eof())
 	{
-		in.read(buffer + sum_num, 1);
+		in.read(p->buffer + sum_num, 1);
 		sum_num++;
 	}
 	sum_num--;
-	buffer[sum_num] = EOF;
+	p->buffer[sum_num] = EOF;
 
 	//start
 	while (s());
 	return;
 }
 //递归版本
-set<string> make_first(string s)
+set<string> parser::make_first(string s)
 {
 	//终结符号表
 	//如果找不到别的以他为首字母的就是终结符
-	if (in_recalculate.find(s) == in_recalculate.end()) //如果加入过recalculate
+	if (p->in_recalculate.find(s) == p->in_recalculate.end()) //如果加入过recalculate
 	{
-		in_recalculate.insert(s);
-		recalculate.push_front(s);
+		p->in_recalculate.insert(s);
+		p->recalculate.push_front(s);
 	}
-	already_in_first.insert(s);
-	ss_it f_s = first_set.find(s);
-	pair<sn_it, sn_it> f = a.equal_range(s);
+	p->already_in_first.insert(s);
+	ss_it f_s = p->first_set.find(s);
+	pair<sn_it, sn_it> f = p->a.equal_range(s);
 	for (sn_it k = f.first; k != f.second; k++)
 	{
 		//把每个的第一个加进去,如果可能出现空的话就把后面的加进去 while(1) if 通过string 剔除第一个 第二个 。。第 n个
@@ -146,28 +109,28 @@ set<string> make_first(string s)
 			first = first + k->second->p.at(lll);
 		}
 		set<string> temp;
-		if (first_set.find(first) == first_set.end())
+		if (p->first_set.find(first) == p->first_set.end())
 		{
 			f_s->second.insert(first);
 			continue;
 		}
-		if (already_in_first.find(first) != already_in_first.end()) //如果已经算过make_first(first)
+		if (p->already_in_first.find(first) != p->already_in_first.end()) //如果已经算过make_first(first)
 		{
 			//需要重新进行计算的
-			if (judge_first_count == 0)
+			if (p->judge_first_count == 0)
 			{
-				if (in_recalculate.find(first) != in_recalculate.end())//如果加入过recalculate
+				if (p->in_recalculate.find(first) != p->in_recalculate.end())//如果加入过recalculate
 					continue;
-				in_recalculate.insert(first);
-				recalculate.push_front(first);
+				p->in_recalculate.insert(first);
+				p->recalculate.push_front(first);
 			}
 			else
 			{
-				ss_it temp_it = first_set.find(first);
+				ss_it temp_it = p->first_set.find(first);
 				int before = f_s->second.size();
 				f_s->second.insert(temp_it->second.begin(), temp_it->second.end());
 				if (f_s->second.size() > before)
-					judge_end = 1;
+					p->judge_end = 1;
 			}
 			continue;
 		}
@@ -176,24 +139,24 @@ set<string> make_first(string s)
 	}
 	return f_s->second;
 }
-void first()
+void parser::first()
 {
 	//make_first(init_word); //初始化
 	ss_it l;
-	for (l = first_set.begin(); l != first_set.end(); l++)
+	for (l = p->first_set.begin(); l != p->first_set.end(); l++)
 		make_first(l->first);
-	judge_first_count = 1; //跳过内部形成栈代码
+	p->judge_first_count = 1; //跳过内部形成栈代码
 	while (1)
 	{
-		judge_end = 0;
-		for (list<string>::iterator ttt = recalculate.begin(); ttt != recalculate.end(); ttt++)
+		p->judge_end = 0;
+		for (list<string>::iterator ttt = p->recalculate.begin(); ttt != p->recalculate.end(); ttt++)
 			make_first(*ttt);
-		if (judge_end == 0)
+		if (p->judge_end == 0)
 			break;
 	}
 }
 
-int closure(set<node*> input_set)
+int parser::closure(set<node*> input_set)
 {
 	//闭包map
 	multimap<string, node*> temp_map;
@@ -211,6 +174,7 @@ int closure(set<node*> input_set)
 	set<string> insert_symbol;
 	while (!stackl.empty())
 	{
+		//cout << stackl.size() << endl;
 		node * n = stackl.front();
 		//如果以前求过以n->s为 头的闭包
 		//求搜索符号集
@@ -234,7 +198,7 @@ int closure(set<node*> input_set)
 		}
 		if (first=="")
 			continue;
-		if (first_set.find(first) == first_set.end())
+		if (p->first_set.find(first) == p->first_set.end())
 			continue;
 
 		string second = "";
@@ -249,8 +213,8 @@ int closure(set<node*> input_set)
 					break;
 				second = second + n->p.at(i);
 			}
-			ss_it first_second = first_set.find(second);
-			if (first_second != first_set.end()) //如果是非终结符
+			ss_it first_second = p->first_set.find(second);
+			if (first_second != p->first_set.end()) //如果是非终结符
 			{
 				set<string>::iterator set_it;
 				insert_symbol.insert(first_second->second.begin(), first_second->second.end());
@@ -263,7 +227,7 @@ int closure(set<node*> input_set)
 		if (setl.find(first) == setl.end())
 		{
 			//cout << "first://" << first << endl;
-			pair<sn_it, sn_it> ret = a.equal_range(first);
+			pair<sn_it, sn_it> ret = p->a.equal_range(first);
 			setl.insert(first);
 			for (sn_it k = ret.first; k != ret.second; k++)
 			{
@@ -290,8 +254,8 @@ int closure(set<node*> input_set)
 			if (tryl.size() > before)
 				for (sn_it j = find_first.first; j != find_first.second; j++)
 				{
-					if (j->second->p.at(0) != '@')
-						continue;
+					//if (j->second->p.at(0) != '@') //--------------------------------------------
+						//continue;
 					j->second->symbol.insert(tryl.begin(), tryl.end());
 					stackl.push_back(j->second);
 					//judge_count++;
@@ -299,25 +263,56 @@ int closure(set<node*> input_set)
 				}
 		}
 	}
-	state_count++;
-	state_map[state_count] = temp_map;
-	return state_count;
+	p->state_count++;
+	p->state_map[p->state_count] = temp_map;
+	return p->state_count;
 }
 
-int find(string s)
+int parser::find(string s)
 {
 	int i1=-1;
-	for (int i = 1; i <= state_count; i++)
-		if (check_in_state[i].find(s) != check_in_state[i].end())
+	for (int i = 1; i <= p->state_count; i++)
+		if (p->check_in_state[i].find(s) != p->check_in_state[i].end())
 		{
 			i1 = i;
-			if (check_in_state[i].size() == 1)
+			if (p->check_in_state[i].size() == 1)
 				return i;
 		}
 	return i1;
 }
 
-int find_all(set<node*> ll)
+int parser::find_all2(set<node*> ll) //将新生成的闭包和以前的闭包进行对比
+{
+	int judge = 0;
+	for (int i = 1; i <= p->state_count; i++)
+	{
+		judge = 0;
+		if (p->check_in_state[i].size() != ll.size())
+			continue;
+		for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
+		{
+			node * temp = *gg;
+			string temps = "";
+			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
+				temps = temps + *temp2;
+			if (p->check_in_state[i].find(temp->s + "->" + temp->p + temps) != p->check_in_state[i].end())
+				continue;
+			else
+			{
+				judge = -1;
+				break;
+			}
+		}
+		if (judge == -1)
+			continue;
+		else
+			return i;
+	}
+	return -1;
+}
+
+
+int parser::find_all1(set<node*> ll) //要生成闭包的元素和原来已有闭包进行对比
 {
 	map<int, int> who_is_more;
 	for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
@@ -329,8 +324,8 @@ int find_all(set<node*> ll)
 		if (ll.size() == 1)
 			return find(temp->s + "->" + temp->p + temps);
 		int lll = 0;
-		for (int i = 1; i <= state_count; i++)
-			if (check_in_state[i].find(temp->s + "->" + temp->p + temps) != check_in_state[i].end())
+		for (int i = 1; i <= p->state_count; i++)
+			if (p->check_in_state[i].find(temp->s + "->" + temp->p + temps) != p->check_in_state[i].end())
 			{
 				lll++;
 				map<int, int>::iterator findll = who_is_more.find(i);
@@ -343,13 +338,15 @@ int find_all(set<node*> ll)
 						return findll->first;
 				}
 			}
-		if (lll == 0)
-			return -1;
+		//if (lll == 0)
+			//return -1;
 	}
 	return -2;
 }
 
-void make_list(set<node*>input_set)
+
+
+void parser::make_list(set<node*>input_set)
 {
 	list<set<node*>> listl;
 	listl.push_back(input_set);
@@ -358,29 +355,37 @@ void make_list(set<node*>input_set)
 	{
 		if (listl.size()==0)
 			break;
+		int lsize = listl.size();
+		cout << lsize << endl;
 		set<node*> init_set = listl.front();
+		set<node*> after_set;
 		listl.pop_front();
-		int gggg = find_all(init_set);
+		//int gggg = find_all1(init_set);
 
 		map<string, set<node*>> zhuanyibiao;
 		zhuanyibiao.clear();
 		int state_countl = closure(init_set);
-		if (gggg != -1 && gggg != -2)
+		for (map<string, node*>::iterator xx = p->state_map[state_countl].begin(); xx != p->state_map[state_countl].end(); xx++)
+			after_set.insert(xx->second);
+
+		int gggg = find_all2(after_set);
+		//if (gggg != -1 && gggg != -2)
+		if(gggg!=-1 && gggg!=state_countl)
 		{
-			if (state_map[gggg].size() == state_map[state_countl].size())
-			{
-				state_count--;
+			//if (p->state_map[gggg].size() == p->state_map[state_countl].size())
+			//{
+				p->state_count--;
 				continue;
-			}
+			//}
 		}
 
-		for (sn_it temp_it = state_map[state_countl].begin(); temp_it != state_map[state_countl].end(); temp_it++)
+		for (sn_it temp_it = p->state_map[state_countl].begin(); temp_it != p->state_map[state_countl].end(); temp_it++)
 		{
 			node * temp = temp_it->second;
 			string temps = "";
 			for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
 				temps = temps + *temp2;
-			check_in_state[state_countl].insert(temp->s + "->" + temp->p + temps);
+			p->check_in_state[state_countl].insert(temp->s + "->" + temp->p + temps);
 
 			string s = temp->p;
 			int at = s.find("@");
@@ -426,16 +431,16 @@ void make_list(set<node*>input_set)
 	return;
 }
 
-void make_list3()
+void parser::make_list3()
 {
 	int state_count_temp = 1;
-	while (state_count_temp <= state_count)
+	while (state_count_temp <= p->state_count)
 	{
 		map<string, set<node*>> zhuanyibiao;
 		zhuanyibiao.clear();
 		string zhuanyifu = "";
 		int findl;
-		for (sn_it temp_it = state_map[state_count_temp].begin(); temp_it != state_map[state_count_temp].end(); temp_it++)
+		for (sn_it temp_it = p->state_map[state_count_temp].begin(); temp_it != p->state_map[state_count_temp].end(); temp_it++)
 		{
 			node * temp = temp_it->second;
 			string temps = "";
@@ -461,21 +466,23 @@ void make_list3()
 
 			if (zhuanyifu == "")//规约
 			{
-				if (state_map[state_count_temp].size() != 1)
-					continue;
 				s.replace(s.length() - 1, 1, "");
-				map<string,int>::iterator lol = q_string_int.find(temp->s + "->" + s);
-				if (lol == q_string_int.end())
+				map<string,int>::iterator lol = p->q_string_int.find(temp->s + "->" + s);
+				if (lol == p->q_string_int.end())
 					cout << "baozhala" << endl;
 				int ll = lol->second;
 				for (set<string>::iterator lg = temp->symbol.begin(); lg != temp->symbol.end(); lg++)
 				{
 					map<string, string>::iterator judgegg;
-					judgegg = go.find(to_string(state_count_temp) + " " + *lg);
-					if (judgegg != go.end())
-						//if (judgegg->second != "r" + to_string(ll))
-							judgecount++;
-					go.insert(pair<string, string>(to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
+					judgegg = p->go.find(to_string(state_count_temp) + " " + *lg);
+					if (judgegg != p->go.end())
+						if (judgegg->second != "r" + to_string(ll))
+							p->judgecount++;
+					map<string, int>::iterator find_hong = p->duizhao.find(*lg);
+					if(find_hong!= p->duizhao.end())
+						p->go.insert(pair<string, string>(to_string(state_count_temp) + " " + to_string(find_hong->second), "r" + to_string(ll)));
+					else
+						p->go.insert(pair<string, string>(to_string(state_count_temp) + " " + *lg, "r" + to_string(ll)));
 				}
 
 			}
@@ -501,31 +508,45 @@ void make_list3()
 		}
 		for (sset_it gg = zhuanyibiao.begin(); gg != zhuanyibiao.end(); gg++)
 		{
-			int all = 0;
-			all = find_all(gg->second);
+			set<node*> after_set;
+			map<string, set<node*>> zhuanyibiao;
+			zhuanyibiao.clear();
+			int state_countl = closure(gg->second);
+			for (map<string, node*>::iterator xx = p->state_map[state_countl].begin(); xx != p->state_map[state_countl].end(); xx++)
+				after_set.insert(xx->second);
+
+			int all = find_all2(after_set);
+			if (all != -1 && all != state_countl)
+				p->state_count--;
+			else
+				p->judgecount++;
 			if (all == -1)
-				judgecount++;
+				p->judgecount++;
 			
 			map<string, string>::iterator judgegg;
-			judgegg = go.find(to_string(state_count_temp) + " " + gg->first);
-			if (judgegg != go.end())
-				//if (judgegg->second != to_string(all))
-					judgecount++;
-			go.insert(pair<string, string>(to_string(state_count_temp) + " " + gg->first,to_string(all)));
+			judgegg = p->go.find(to_string(state_count_temp) + " " + gg->first);
+			if (judgegg != p->go.end())
+				if (judgegg->second != to_string(all))
+					p->judgecount++;
+			map<string, int>::iterator find_hong = p->duizhao.find(gg->first);
+			if (find_hong != p->duizhao.end())
+				p->go.insert(pair<string, string>(to_string(state_count_temp) + " " + to_string(find_hong->second),to_string(all)));
+			else
+				p->go.insert(pair<string, string>(to_string(state_count_temp) + " " + gg->first, to_string(all)));
 		}
 		state_count_temp++;
 	}
 }
 
-void main_paser()
+gloable_variablep * parser::mainfunction()
 {
 	set<node*>input_set_init;
 	standardize();
 	first();
-
-	pair<sn_it, sn_it> g = a.equal_range(init_word);
+	make_duizhao();
+	pair<sn_it, sn_it> g = p->a.equal_range(p->init_word);
 	cout<<"标准化："<<endl;
-	for (sn_it lll = a.begin(); lll != a.end(); lll++)
+	for (sn_it lll = p->a.begin(); lll != p->a.end(); lll++)
 		cout << lll->first << "->" << lll->second->p << endl;
 	//给最初表达式初始化搜索符号
 	for (sn_it temp = g.first; temp != g.second; temp++)
@@ -535,10 +556,10 @@ void main_paser()
 	make_list(input_set_init);
 	make_list3();
 	cout << endl << "closure" << endl;
-	for (int i = 1; i <= state_count; i++)
+	for (int i = 1; i <= p->state_count; i++)
 	{
 		cout << "closure:" << i << endl;
-		for (sn_it ii = state_map[i].begin(); ii != state_map[i].end(); ii++)
+		for (sn_it ii = p->state_map[i].begin(); ii != p->state_map[i].end(); ii++)
 		{
 			string sss="///";
 			set<string>::iterator mmm;
@@ -550,7 +571,7 @@ void main_paser()
 	}
 	
 	cout << endl << "first:" << endl;
-	for (ss_it itt = first_set.begin(); itt != first_set.end(); itt++)
+	for (ss_it itt = p->first_set.begin(); itt != p->first_set.end(); itt++)
 	{
 		cout << endl<<itt->first << ":";
 		set<string>::iterator si;
@@ -559,5 +580,63 @@ void main_paser()
 	}
 	
 	cout << endl;
-	return;
+	return p;
+}
+void parser::make_duizhao()
+{
+	p->duizhao.insert(pair<string, int>("if", IF));
+	p->duizhao.insert(pair<string, int>("else", ELSE));
+	p->duizhao.insert(pair<string, int>("elseif", ELSEIF));
+	p->duizhao.insert(pair<string, int>("for", FOR));
+	p->duizhao.insert(pair<string, int>("while", WHILE));
+	p->duizhao.insert(pair<string, int>("break",BREAK));
+	p->duizhao.insert(pair<string, int>("continue", CONTINUE));
+	p->duizhao.insert(pair<string, int>("return", RETURN));
+	p->duizhao.insert(pair<string, int>("main", MAIN));
+	p->duizhao.insert(pair<string, int>("int_type", INTEGER_TYPE));
+	p->duizhao.insert(pair<string, int>("char_type", CHAR_TYPE));
+	p->duizhao.insert(pair<string, int>("void_type", VOID_TYPE));
+	p->duizhao.insert(pair<string, int>("include", INCLUDE));
+	//标识符
+	p->duizhao.insert(pair<string, int>("id", ID));
+	p->duizhao.insert(pair<string, int>("matrix_id", MATRIX_ID)); //-----------
+																  //整常数 字符串常数
+	p->duizhao.insert(pair<string, int>("int", INT));
+	p->duizhao.insert(pair<string, int>("string", STRING));
+	p->duizhao.insert(pair<string, int>("char", CHAR));
+	//运算符
+	//算术运算符
+	p->duizhao.insert(pair<string, int>("'+'", ADD));  //  +
+	p->duizhao.insert(pair<string, int>("'-'", SUB));  //  -
+	p->duizhao.insert(pair<string, int>("'*'", MULTI));  //  *
+	p->duizhao.insert(pair<string, int>("'/'", DIV));  // /
+	p->duizhao.insert(pair<string, int>("'%'", MOD));  //  %
+	p->duizhao.insert(pair<string, int>("'++'", ADDD));  //  ++
+	p->duizhao.insert(pair<string, int>("'--'", SUBB));  //  --
+														 //关系运算符
+	p->duizhao.insert(pair<string, int>("'>'", SMALL));  //  >
+	p->duizhao.insert(pair<string, int>("'<'", BIG));  //  <
+	p->duizhao.insert(pair<string, int>("'>='", NSMALL));  //  >=
+	p->duizhao.insert(pair<string, int>("'<='", NBIG));  //  <=
+	p->duizhao.insert(pair<string, int>("'=='", EQUAL));  // ==
+	p->duizhao.insert(pair<string, int>("'!='", NEQUAL));  //  !=
+														   //逻辑运算符
+	p->duizhao.insert(pair<string, int>("'&&'", AND));  //  &&
+	p->duizhao.insert(pair<string, int>("'||'", OR));  //  ||
+	p->duizhao.insert(pair<string, int>("'!'", NOT));  //  !
+													   //赋值
+	p->duizhao.insert(pair<string, int>("'='", ASSIGN));  // =
+														  //分界符
+	p->duizhao.insert(pair<string, int>("'('", LS));  //  (
+	p->duizhao.insert(pair<string, int>("')'", RS));  //  )
+	p->duizhao.insert(pair<string, int>("'{'", LB));  //  {
+	p->duizhao.insert(pair<string, int>("'}'", RB));  //  }
+	p->duizhao.insert(pair<string, int>("'['", LM));  //  [
+	p->duizhao.insert(pair<string, int>("']'", RM));  //  ]
+	p->duizhao.insert(pair<string, int>("','", COMMA));  //  ,
+	p->duizhao.insert(pair<string, int>("':'", COLON));  //  :
+	p->duizhao.insert(pair<string, int>("';'", SEMIC));  //  ;
+	//p->duizhao.insert(pair<string, int>("\"", QUO));  //  "
+	//p->duizhao.insert(pair<string, int>("\'", SQUO));  //  '
+	//p->duizhao.insert(pair<string, int>("#", OIL));  //  #
 }

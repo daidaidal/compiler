@@ -17,7 +17,7 @@ void lex::read()
 				g->in.read(g->buffer + i, 1);
 			else
 			{
-				g->buffer[i] = EOF;
+				g->buffer[i-1] = EOF;
 				break;
 			}
 		}
@@ -30,7 +30,7 @@ void lex::read()
 				g->in.read(g->buffer + i, 1);
 			else
 			{
-				g->buffer[i] = EOF;
+				g->buffer[i-1] = EOF;
 				break;
 			}
 		}
@@ -113,7 +113,7 @@ int lex::gettoken(char * token)
 }
 void lex::error_handle(int num)
 {
-	error *temp = new error(g->error_hang, num);
+	errorl *temp = new errorl(g->error_hang, num);
 	g->e[g->count_e] = temp;
 	g->count_e++;
 }
@@ -510,7 +510,7 @@ int * lex::token_scan()
 	return ret;
 }
 
-void lex::mainfunction()
+gloable_variable * lex::mainfunction()
 {
 	//缓冲区的设置 读取文件
 	//错误处理 错误恢复
@@ -522,7 +522,7 @@ void lex::mainfunction()
 	g->in.open("111.txt");
 	if (!g->in)
 	{
-		cout << "open error" << endl;
+		cout << "open errorl" << endl;
 	}
 	g->buffer[4095] = EOF;
 	g->buffer[8191] = EOF;
@@ -533,16 +533,16 @@ void lex::mainfunction()
 		ret = token_scan();
 		g->hou = g->qian;
 		if (ret[0] == EOF)
+		{
+			g->save[save_count][0] = -1;
 			break;
+		}
 		else if (ret[0] == NULL)
 			continue;
 		cout << '(' << ret[0] << "," << ret[1] << ")" << endl;
 		g->save[save_count][0] = ret[0];
 		g->save[save_count][1] = ret[1];
 		save_count++;
-
-
-
 	}
 	g->in.close();
 	int temp = 0;
@@ -552,7 +552,7 @@ void lex::mainfunction()
 			temp = 3;
 		else
 			temp = 4;
-		error *feng = new error(g->S[j][0], temp);
+		errorl *feng = new errorl(g->S[j][0], temp);
 		g->e[g->count_e] = feng;
 		g->count_e++;
 	}
@@ -562,7 +562,7 @@ void lex::mainfunction()
 			temp = 5;
 		else
 			temp = 6;
-		error *feng = new error(g->M[j][0], temp);
+		errorl *feng = new errorl(g->M[j][0], temp);
 		g->e[g->count_e] = feng;
 		g->count_e++;
 	}
@@ -572,13 +572,15 @@ void lex::mainfunction()
 			temp = 7;
 		else
 			temp = 8;
-		error *feng = new error(g->B[j][0], temp);
+		errorl *feng = new errorl(g->B[j][0], temp);
 		g->e[g->count_e] = feng;
 		g->count_e++;
 	}
 
 	cout << endl;
-	delete g;
+	map<string, int> duizhao;
+	duizhao.insert(pair<string, int>("lala", IF));
+	//delete g;
 	cout << "delete" << endl;
-	return;
+	return g;
 }

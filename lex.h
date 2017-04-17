@@ -2,6 +2,7 @@
 #include<iostream>
 #include<string>
 #include<tuple>
+#include <map>
 #include <fstream> 
 #include <math.h>
 using namespace std;
@@ -18,7 +19,7 @@ public:
 	int count_cl = 0;
 	int countl = 0;
 	int boundary = 0; //是否回退到边界线过
-	class error *e[100]; //错误数组 行数，错误原因
+	class errorl *e[100]; //错误数组 行数，错误原因
 	int count_e = 0;
 	int hang = 1; //处理到多少行 错误提示使用
 	int error_hang; //错误行数
@@ -46,5 +47,5 @@ public:
 	void left(int a[][2], int &count);
 	void right(int a[][2], int &count);
 	int * token_scan();
-	void mainfunction();
+	gloable_variable * mainfunction();
 };

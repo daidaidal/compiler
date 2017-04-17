@@ -1,5 +1,5 @@
 //关键字
-#define IF 1
+#define IF 1	
 #define ELSE 2
 #define ELSEIF 3
 #define FOR 4
@@ -10,13 +10,15 @@
 #define MAIN 9
 #define INTEGER_TYPE 10
 #define CHAR_TYPE 11
-#define INCLUDE 12
+#define VOID_TYPE 12
+#define INCLUDE 13
 //标识符
 #define ID 13
+#define MATRIX_ID 14
 //整常数 字符串常数
-#define INT 14
-#define STRING 15
-#define CHAR 16
+#define INT 15
+#define STRING 16
+#define CHAR 17
 //运算符
 //算术运算符
 #define ADD 18 // +
@@ -62,10 +64,10 @@
 运算符
 分界符
 */
-class error {
+class errorl {
 public:int hang;
 	int type;
-	error(int hang, int type)
+	errorl(int hang, int type)
 	{
 		this->hang = hang;
 		this->type = type;  // 0:非法字符 1:'' 2:"" 3,4:() 5,6:[] 7,8:{} 9:/* */
