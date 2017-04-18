@@ -13,28 +13,27 @@
 #define VOID_TYPE 12
 #define INCLUDE 13
 //标识符
-#define ID 13
-#define MATRIX_ID 14
+#define ID 14
 //整常数 字符串常数
-#define INT 15
-#define STRING 16
-#define CHAR 17
+#define INT 16
+#define STRING 17
+#define CHAR 18
 //运算符
 //算术运算符
-#define ADD 18 // +
-#define SUB 19 // -
-#define MULTI 20 // *
-#define DIV 21 // /
-#define MOD 22 // %
-#define	ADDD 23 // ++
-#define SUBB 24 // --
+#define ADD 19 // +
+#define SUB 20 // -
+#define MULTI 21 // *
+#define DIV 22 // /
+#define MOD 23 // %
+#define	ADDD 24 // ++
+#define SUBB 25 // --
 //关系运算符
-#define SMALL 25 // >
-#define BIG 26 // <
-#define NSMALL 27 // >=
-#define NBIG 28 // <=
-#define EQUAL 29 // ==
-#define NEQUAL 30 // !=
+#define SMALL 26 // >
+#define BIG 27 // <
+#define NSMALL 28 // >=
+#define NBIG 29 // <=
+#define EQUAL 30 // ==
+#define NEQUAL 31 // !=
 //逻辑运算符
 #define AND 33 // &&
 #define OR 34 // ||
@@ -54,9 +53,9 @@
 #define LNOTE 46// /*
 #define RNOTE 47// */
 #define LINENOTE 48// //
-#define QUO 49; // "
-#define SQUO 50; // '
-#define OIL 51; //#
+#define QUO 49 // "
+#define SQUO 50 // '
+#define OIL 51 //#
 /*
 关键字
 标识符

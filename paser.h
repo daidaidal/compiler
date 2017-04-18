@@ -54,6 +54,7 @@ public:
 
 	string init_word = "s";   //postfix_expression
 	string file_name = "mywenfa.txt";  //postfix_expression
+
     //string init_word = "S";  
 	//string file_name = "222.txt";  
 
@@ -71,8 +72,8 @@ public:
 	set<string> make_first(string s);
 	void first();
 	int closure(set<node*> input_set);
-	int find(string s);
-	int find_all1(set<node*> ll);
+	//int find(string s);
+	//int find_all1(set<node*> ll);
 	int find_all2(set<node*> ll);
 	void make_list(set<node*>input_set);
 	void make_list3();

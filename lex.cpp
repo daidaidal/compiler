@@ -87,8 +87,6 @@ int lex::gettoken(char * token)
 {
 	if (!strcmp(token, "if"))
 		return IF;
-	else if (!strcmp(token, "else if"))
-		return ELSEIF;
 	else if (!strcmp(token, "else"))
 		return ELSE;
 	else if (!strcmp(token, "for"))
@@ -109,6 +107,8 @@ int lex::gettoken(char * token)
 		return CHAR_TYPE;
 	else if (!strcmp(token, "include"))
 		return INCLUDE;
+	else if (!strcmp(token, "void"))
+		return VOID_TYPE;
 	else return ID;
 }
 void lex::error_handle(int num)

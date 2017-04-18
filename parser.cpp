@@ -268,18 +268,6 @@ int parser::closure(set<node*> input_set)
 	return p->state_count;
 }
 
-int parser::find(string s)
-{
-	int i1=-1;
-	for (int i = 1; i <= p->state_count; i++)
-		if (p->check_in_state[i].find(s) != p->check_in_state[i].end())
-		{
-			i1 = i;
-			if (p->check_in_state[i].size() == 1)
-				return i;
-		}
-	return i1;
-}
 
 int parser::find_all2(set<node*> ll) //将新生成的闭包和以前的闭包进行对比
 {
@@ -311,41 +299,6 @@ int parser::find_all2(set<node*> ll) //将新生成的闭包和以前的闭包进行对比
 	return -1;
 }
 
-
-int parser::find_all1(set<node*> ll) //要生成闭包的元素和原来已有闭包进行对比
-{
-	map<int, int> who_is_more;
-	for (set<node*>::iterator gg = ll.begin(); gg != ll.end(); gg++)
-	{
-		node * temp = *gg;
-		string temps = "";
-		for (set<string>::iterator temp2 = temp->symbol.begin(); temp2 != temp->symbol.end(); temp2++)
-			temps = temps + *temp2;
-		if (ll.size() == 1)
-			return find(temp->s + "->" + temp->p + temps);
-		int lll = 0;
-		for (int i = 1; i <= p->state_count; i++)
-			if (p->check_in_state[i].find(temp->s + "->" + temp->p + temps) != p->check_in_state[i].end())
-			{
-				lll++;
-				map<int, int>::iterator findll = who_is_more.find(i);
-				if (findll == who_is_more.end())
-					who_is_more.insert(pair<int, int>(i, 1));
-				else
-				{
-					findll->second++;
-					if (findll->second == ll.size())
-						return findll->first;
-				}
-			}
-		//if (lll == 0)
-			//return -1;
-	}
-	return -2;
-}
-
-
-
 void parser::make_list(set<node*>input_set)
 {
 	list<set<node*>> listl;
@@ -356,7 +309,7 @@ void parser::make_list(set<node*>input_set)
 		if (listl.size()==0)
 			break;
 		int lsize = listl.size();
-		cout << lsize << endl;
+		//cout << lsize << endl;
 		set<node*> init_set = listl.front();
 		set<node*> after_set;
 		listl.pop_front();
@@ -408,8 +361,6 @@ void parser::make_list(set<node*>input_set)
 			if (check == 0)
 				s = s + '@';
 
-			//
-			int findl = find(temp->s + "->" + s + temps);
 
 			sset_it diedai = zhuanyibiao.find(zhuanyifu);
 			node * temp_node = new node(temp->s, s);
@@ -490,7 +441,6 @@ void parser::make_list3()
 			{
 				if (check == 0)
 					s = s + '@';
-				findl = find(temp->s + "->" + s + temps);
 
 				sset_it diedai = zhuanyibiao.find(zhuanyifu);
 				node * temp_node = new node(temp->s, s);
@@ -546,8 +496,8 @@ gloable_variablep * parser::mainfunction()
 	make_duizhao();
 	pair<sn_it, sn_it> g = p->a.equal_range(p->init_word);
 	cout<<"标准化："<<endl;
-	for (sn_it lll = p->a.begin(); lll != p->a.end(); lll++)
-		cout << lll->first << "->" << lll->second->p << endl;
+	//for (sn_it lll = p->a.begin(); lll != p->a.end(); lll++)
+		//cout << lll->first << "->" << lll->second->p << endl;
 	//给最初表达式初始化搜索符号
 	for (sn_it temp = g.first; temp != g.second; temp++)
 		temp->second->symbol.insert("#");
@@ -555,6 +505,7 @@ gloable_variablep * parser::mainfunction()
 		input_set_init.insert(temp->second);
 	make_list(input_set_init);
 	make_list3();
+	/*
 	cout << endl << "closure" << endl;
 	for (int i = 1; i <= p->state_count; i++)
 	{
@@ -578,7 +529,7 @@ gloable_variablep * parser::mainfunction()
 		for (si = itt->second.begin();si != itt->second.end();si++)
 			cout << *si << " ";
 	}
-	
+	*/
 	cout << endl;
 	return p;
 }
@@ -586,7 +537,7 @@ void parser::make_duizhao()
 {
 	p->duizhao.insert(pair<string, int>("if", IF));
 	p->duizhao.insert(pair<string, int>("else", ELSE));
-	p->duizhao.insert(pair<string, int>("elseif", ELSEIF));
+	//p->duizhao.insert(pair<string, int>("elseif", ELSEIF));
 	p->duizhao.insert(pair<string, int>("for", FOR));
 	p->duizhao.insert(pair<string, int>("while", WHILE));
 	p->duizhao.insert(pair<string, int>("break",BREAK));
@@ -599,7 +550,6 @@ void parser::make_duizhao()
 	p->duizhao.insert(pair<string, int>("include", INCLUDE));
 	//标识符
 	p->duizhao.insert(pair<string, int>("id", ID));
-	p->duizhao.insert(pair<string, int>("matrix_id", MATRIX_ID)); //-----------
 																  //整常数 字符串常数
 	p->duizhao.insert(pair<string, int>("int", INT));
 	p->duizhao.insert(pair<string, int>("string", STRING));
@@ -614,8 +564,8 @@ void parser::make_duizhao()
 	p->duizhao.insert(pair<string, int>("'++'", ADDD));  //  ++
 	p->duizhao.insert(pair<string, int>("'--'", SUBB));  //  --
 														 //关系运算符
-	p->duizhao.insert(pair<string, int>("'>'", SMALL));  //  >
-	p->duizhao.insert(pair<string, int>("'<'", BIG));  //  <
+	p->duizhao.insert(pair<string, int>("'<'", SMALL));  //  >
+	p->duizhao.insert(pair<string, int>("'>'", BIG));  //  <
 	p->duizhao.insert(pair<string, int>("'>='", NSMALL));  //  >=
 	p->duizhao.insert(pair<string, int>("'<='", NBIG));  //  <=
 	p->duizhao.insert(pair<string, int>("'=='", EQUAL));  // ==
@@ -635,8 +585,9 @@ void parser::make_duizhao()
 	p->duizhao.insert(pair<string, int>("']'", RM));  //  ]
 	p->duizhao.insert(pair<string, int>("','", COMMA));  //  ,
 	p->duizhao.insert(pair<string, int>("':'", COLON));  //  :
-	p->duizhao.insert(pair<string, int>("';'", SEMIC));  //  ;
+	p->duizhao.insert(pair<string, int>("';'", SEMIC));  //  \;
+	
+	p->duizhao.insert(pair<string, int>("#", OIL));  //  #
 	//p->duizhao.insert(pair<string, int>("\"", QUO));  //  "
 	//p->duizhao.insert(pair<string, int>("\'", SQUO));  //  '
-	//p->duizhao.insert(pair<string, int>("#", OIL));  //  #
 }
