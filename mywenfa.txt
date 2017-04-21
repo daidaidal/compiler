@@ -10,6 +10,12 @@ type
 
 matrix_id
 	id '[' int ']'
+	id '[' int ']' multi_weishu
+	;
+
+multi_weishu
+	'[' int ']'
+	multi_weishu '[' int ']'
 	;
 	
 codeblockplus
@@ -18,7 +24,7 @@ codeblockplus
 	
 codeblock
 	statement
-	codeblock statement
+	statement codeblock
 	;
 	
 statement

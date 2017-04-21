@@ -2,7 +2,7 @@ void main()
 {
 	int i=1;
 	char b='a';
-	char c[10]="hello";
+	char c[10][20]="hello";
 	for(i=1;i<10;i=i+1)
 	{
 		if(i<5)
