@@ -36,4 +36,30 @@
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="for_temp.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="mywenfa.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="test_first.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="yuanshiwenfa.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="input.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="bookwenfa.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="newwenfa.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+    <Text Include="question.txt">
+      <Filter>资源文件</Filter>
+    </Text>
+  </ItemGroup>
 </Project>

@@ -1,11 +1,12 @@
 void main()
 {
-	int i=1;
-	char b='a';
-	char c[10][20]="hello";
+	int i;
+	int j;
+	char b;
+	char c[10][20];
 	for(i=1;i<10;i=i+1)
 	{
-		if(i<5)
+		if((i<5)&&(i<7))&&(i==6))
 		{
 			b='c';
 		}

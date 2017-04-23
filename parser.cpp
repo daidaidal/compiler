@@ -50,7 +50,8 @@ int parser::s()
 		p->int_string_count++;
 		p->q_string_int.insert(pair<string,int>(s + "->" + ps, p->int_string_count));
 		p->q_int_string.insert(pair<int, string>(p->int_string_count, s + "->" + ps));
-
+		if (ps == "'$'")//-------------------------------------------------------------
+			p->null_set.insert(s);
 		ps = '@' + ps;
 		p->start->next = new node(s, ps);
 		p->start = p->start->next;
@@ -88,59 +89,87 @@ set<string> parser::make_first(string s)
 {
 	//终结符号表
 	//如果找不到别的以他为首字母的就是终结符
-	if (p->in_recalculate.find(s) == p->in_recalculate.end()) //如果加入过recalculate
+	if (p->in_recalculate.find(s) == p->in_recalculate.end()) //如果没有加入过recalculate
 	{
 		p->in_recalculate.insert(s);
 		p->recalculate.push_front(s);
 	}
 	p->already_in_first.insert(s);
 	ss_it f_s = p->first_set.find(s);
+	//if (p->null_set.find(s) != p->null_set.end())
+		//f_s->second.insert("'$'");
 	pair<sn_it, sn_it> f = p->a.equal_range(s);
 	for (sn_it k = f.first; k != f.second; k++)
 	{
 		//把每个的第一个加进去,如果可能出现空的话就把后面的加进去 while(1) if 通过string 剔除第一个 第二个 。。第 n个
 		int at = k->second->p.find("@");
-		//string first = k->second->p.substr(at + 1, k->second->p.find(" ", at) - 1);
+		int at2 = at;
 		string first = "";
+
+		list<string>firsts;
+
 		for (int lll = at + 1; lll < k->second->p.length(); lll++)
 		{
 			if (k->second->p.at(lll) == ' ')
-				break;
+			{
+				if (p->null_set.find(first) != p->null_set.end())
+				{
+					firsts.push_front(first);
+					first = "";
+				}
+				else
+					break;
+			}
 			first = first + k->second->p.at(lll);
 		}
-		set<string> temp;
-		if (p->first_set.find(first) == p->first_set.end())
+		if (p->null_set.find(first) != p->null_set.end())
+			f_s->second.insert("'$'");
+		firsts.push_front(first);
+
+		for (list<string>::iterator uu = firsts.begin(); uu != firsts.end(); uu++)
 		{
-			f_s->second.insert(first);
-			continue;
-		}
-		if (p->already_in_first.find(first) != p->already_in_first.end()) //如果已经算过make_first(first)
-		{
-			//需要重新进行计算的
-			if (p->judge_first_count == 0)
+			first = *uu;
+			set<string> temp;
+			if (p->first_set.find(first) == p->first_set.end())
 			{
-				if (p->in_recalculate.find(first) != p->in_recalculate.end())//如果加入过recalculate
-					continue;
-				p->in_recalculate.insert(first);
-				p->recalculate.push_front(first);
+				f_s->second.insert(first);
+				continue;
 			}
-			else
+			if (p->already_in_first.find(first) != p->already_in_first.end()) //如果已经算过make_first(first)
 			{
-				ss_it temp_it = p->first_set.find(first);
-				int before = f_s->second.size();
-				f_s->second.insert(temp_it->second.begin(), temp_it->second.end());
-				if (f_s->second.size() > before)
-					p->judge_end = 1;
+				//需要重新进行计算的
+				if (p->judge_first_count == 0)
+				{
+					if (p->in_recalculate.find(first) != p->in_recalculate.end())//如果加入过recalculate
+						continue;
+					p->in_recalculate.insert(first);
+					p->recalculate.push_front(first);
+				}
+				else
+				{
+					ss_it temp_it = p->first_set.find(first);
+					int before = f_s->second.size();
+					f_s->second.insert(temp_it->second.begin(), temp_it->second.end());
+					if (f_s->second.size() > before)
+						p->judge_end = 1;
+				}
+				continue;
 			}
-			continue;
+			temp = make_first(first);
+			set<string>::iterator tt = temp.find("'$'");
+			if (tt != temp.end())
+			{
+				p->null_set.insert(first);
+				temp.erase(tt);
+			}
+			f_s->second.insert(temp.begin(), temp.end());
 		}
-		temp = make_first(first);
-		f_s->second.insert(temp.begin(), temp.end());
 	}
 	return f_s->second;
 }
 void parser::first()
 {
+
 	//make_first(init_word); //初始化
 	ss_it l;
 	for (l = p->first_set.begin(); l != p->first_set.end(); l++)
@@ -154,6 +183,7 @@ void parser::first()
 		if (p->judge_end == 0)
 			break;
 	}
+
 }
 
 int parser::closure(set<node*> input_set)
@@ -206,21 +236,36 @@ int parser::closure(set<node*> input_set)
 			insert_symbol.insert(n->symbol.begin(), n->symbol.end());
 		else
 		{
+			list<string> seconds;
 			at = n->p.find(" ", n->p.find("@"));
 			for (int i = at + 1; i < n->p.size(); i++)
 			{
 				if (n->p.at(i) == ' ')
-					break;
+				{
+					if (p->null_set.find(second) != p->null_set.end())
+					{
+						seconds.push_front(second);
+						second = "";
+					}
+					else
+						break;
+				}
 				second = second + n->p.at(i);
 			}
-			ss_it first_second = p->first_set.find(second);
-			if (first_second != p->first_set.end()) //如果是非终结符
+
+			seconds.push_front(second);
+			for (list<string>::iterator uu = seconds.begin(); uu != seconds.end(); uu++)
 			{
-				set<string>::iterator set_it;
-				insert_symbol.insert(first_second->second.begin(), first_second->second.end());
+				second = *uu;
+				ss_it first_second = p->first_set.find(second);
+				if (first_second != p->first_set.end()) //如果是非终结符
+				{
+					set<string>::iterator set_it;
+					insert_symbol.insert(first_second->second.begin(), first_second->second.end());
+				}
+				else //如果是终结符
+					insert_symbol.insert(second);
 			}
-			else //如果是终结符
-				insert_symbol.insert(second);
 		}
 
 
@@ -254,7 +299,7 @@ int parser::closure(set<node*> input_set)
 			if (tryl.size() > before)
 				for (sn_it j = find_first.first; j != find_first.second; j++)
 				{
-					//if (j->second->p.at(0) != '@') //--------------------------------------------
+					//if (j->second->p.at(0) != '@') //----------------------
 						//continue;
 					j->second->symbol.insert(tryl.begin(), tryl.end());
 					stackl.push_back(j->second);

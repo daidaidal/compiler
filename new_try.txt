@@ -9,25 +9,15 @@ type
 	;
 
 matrix_id
+	id '[' int ']'
 	id '[' int ']' multi_weishu
 	;
 
 multi_weishu
-	'$'
+	'[' int ']'
 	multi_weishu '[' int ']'
 	;
-
-multi_id
-	multi_id ',' id
-	multi_id ',' matrix_id
-	id
-	matrix_id
-	;
-
-declare_statement
-	type multi_id
-	;
-
+	
 codeblockplus
 	'{' codeblock '}'
 	;
@@ -54,6 +44,17 @@ assign_statement
 zifu
 	char
 	string
+	;
+
+multi_id
+	multi_id ',' id
+	multi_id ',' matrix_id
+	id
+	matrix_id
+	;
+
+declare_statement
+	type multi_id
 	;
 
 math_statement

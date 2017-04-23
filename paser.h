@@ -36,6 +36,7 @@ public:
 	set<string> already_in_first;//已经用调用过make_first的string
 	set<string> in_recalculate; //判断是否加入过recalculate
 	list<string> recalculate;
+	set<string>null_set;
 	map<string, int> q_string_int;
 	map<int, string> q_int_string;
 	int int_string_count = 0;
@@ -50,13 +51,15 @@ public:
 	int judgecount = 0; //试验文法后删除
 
 	//string init_word = "s0";   //postfix_expression
-	//string file_name="temp.txt";  //postfix_expression
+	//string file_name="bookwenfa.txt";  //postfix_expression
 
 	string init_word = "s";   //postfix_expression
 	string file_name = "mywenfa.txt";  //postfix_expression
 
+	//string file_name = "test_first.txt";
+
     //string init_word = "S";  
-	//string file_name = "222.txt";  
+	//string file_name = "yuanshiwenfa.txt";  
 
 	multimap<string, node*> state_map[10000]; //有可能不是拷贝而是引用地址，需验证:就是引用地址
 	set<string> check_in_state[10000];
@@ -79,4 +82,5 @@ public:
 	void make_list3();
 	gloable_variablep * mainfunction();
 };
+
 

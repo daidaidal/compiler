@@ -49,3 +49,39 @@ public:
 	int * token_scan();
 	gloable_variable * mainfunction();
 };
+class matrix_develop {
+public:
+	int sum_weishu; //从一开始
+	int weishu[10];
+	matrix_develop()
+	{
+		this->sum_weishu = 0;
+	}
+};
+class val_attribute {
+public:
+	int vall[2]; //val
+	string name;
+	string type;
+	int if_matrix;
+	int width;
+	matrix_develop * mdevelop;
+
+};
+class symbol {
+public:
+	string name;
+	int if_matrix; //1为数组，0为变量
+	string type;
+	int offset;
+	matrix_develop *matrix_attribute;
+	symbol(string name,int if_matrix,string type,int offset,matrix_develop *matrix_attribute)
+	{
+		this->name = name;
+		this->if_matrix = if_matrix;
+		this->type = type;
+		this->offset = offset;
+		this->matrix_attribute = matrix_attribute;
+	}
+};
+

@@ -120,6 +120,16 @@
     <ClCompile Include="main.cpp" />
     <ClCompile Include="parser.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="input.txt" />
+    <Text Include="newwenfa.txt" />
+    <Text Include="question.txt" />
+    <Text Include="yuanshiwenfa.txt" />
+    <Text Include="for_temp.txt" />
+    <Text Include="mywenfa.txt" />
+    <Text Include="bookwenfa.txt" />
+    <Text Include="test_first.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

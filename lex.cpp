@@ -519,7 +519,7 @@ gloable_variable * lex::mainfunction()
 	int i = 0;
 	//cout << "请输入文件名：";
 	//getline(cin, file_name, '\n');
-	g->in.open("111.txt");
+	g->in.open("input.txt");
 	if (!g->in)
 	{
 		cout << "open errorl" << endl;
