@@ -2,32 +2,6 @@ s
 	type main '(' ')' codeblockplus
 	;
 
-type
-	char_type
-	int_type
-	void_type
-	;
-
-matrix_id
-	id '[' int ']' multi_weishu
-	;
-
-multi_weishu
-	'$'
-	multi_weishu '[' int ']'
-	;
-
-multi_id
-	multi_id ',' id
-	multi_id ',' matrix_id
-	id
-	matrix_id
-	;
-
-declare_statement
-	type multi_id
-	;
-
 codeblockplus
 	'{' codeblock '}'
 	;
@@ -42,18 +16,54 @@ statement
 	assign_statement ';'
 	declare_statement ';'
 	control_statement
+	print_statement ';'
+	;
+
+type
+	char_type
+	int_type
+	void_type
+	;
+
+matrix_id
+	id multi_weishu
+	;
+
+multi_weishu
+	'[' int ']'
+	multi_weishu '[' int ']'
+	;
+
+multi_id
+	multi_id ',' id
+	multi_id ',' matrix_id
+	multi_id ',' assign_statement
+	id
+	matrix_id
+	assign_statement;
 	;
 
 assign_statement
 	id '=' math_statement
-	id '=' zifu
+	id '=' char
 	matrix_id '=' math_statement
-	matrix_id '=' zifu
+	matrix_id '=' char
+	matrix_id '=' '{' multi_int '}'
+	matrix_id '=' '{' multi_char '}'
 	;
 
-zifu
+multi_int
+	int
+	multi_int ',' int
+	;
+
+multi_char
 	char
-	string
+	multi_char ',' char
+	;
+
+declare_statement
+	type multi_id
 	;
 
 math_statement
@@ -66,7 +76,6 @@ math_item
 	math_basic
 	math_item '*' math_basic
 	math_item '/' math_basic
-	math_item '%' math_basic
 	;
 
 math_basic
@@ -74,28 +83,18 @@ math_basic
 	matrix_id
 	int
 	'(' math_statement ')'
+	'-' math_basic
 	'++' math_basic
-	math_basic '++'
 	'--' math_basic
-	math_basic '--'
-	;
-	
-logic_statement
-	logic_mid
-	logic_statement '||' logic_mid
 	;
 
-logic_mid
-	logic_basic
-	'!' logic_mid
-	logic_basic '&&' logic_mid
-	;
-	
-logic_basic
-	math_statement
-	logic_basic logic_op math_statement
-	'(' logic_statement ')'
-	;
+logic
+	logic '||' logic
+	logic '&&' logic
+	'!' logic
+	'(' logic ')'
+	math_statement logic_op math_statement
+	;	
 	
 logic_op
 	'>='
@@ -113,32 +112,25 @@ control_statement
 	;
 	
 if_statement
-	if '(' logic_statement ')' codeblockplus
-	if '(' logic_statement ')' codeblockplus elseif_statement
-	if '(' logic_statement ')' codeblockplus elseif_statement else_statement
-	if '(' logic_statement ')' codeblockplus else_statement
-	;
-
-elseif_statement
-	else if '(' logic_statement ')' codeblockplus
-	elseif_statement else if '(' logic_statement ')' codeblockplus
-	;
-	
-else_statement
-	else codeblockplus
+	if logic codeblockplus
+	if logic codeblockplus else codeblockplus
 	;
 
 while_statement
-	while '(' logic_statement ')' codeblockplus
+	while '(' logic ')' codeblockplus
 	;
 
 for_statement
-	for '(' assign_statement ';' logic_statement ';' assign_statement ')' codeblockplus
-	for '(' ';' logic_statement ';' assign_statement ')' codeblockplus
-	for '(' assign_statement ';' ';' assign_statement ')' codeblockplus
-	for '(' assign_statement ';' logic_statement ';' ')' codeblockplus
-	for '(' assign_statement ';' ';' ')' codeblockplus
-	for '(' ';' logic_statement ';' ')' codeblockplus
-	for '(' ';' ';' assign_statement ')' codeblockplus
-	for '(' ';' ';' ')' codeblockplus
+	for '(' assign_statement ';' logic ';' assign_statement ')' codeblockplus
+	;
+
+print_statement
+	printf '(' string ',' output ')'
+	;
+	
+output
+	int
+	char
+	id
+	matrix_id
 	;

@@ -55,7 +55,7 @@ public:
 	int weishu[10];
 	matrix_develop()
 	{
-		this->sum_weishu = 0;
+		this->sum_weishu =0;
 	}
 };
 class val_attribute {
@@ -65,6 +65,10 @@ public:
 	string type;
 	int if_matrix;
 	int width;
+	string logic_op;
+	int addr;
+	int truel;
+	int falsel;
 	matrix_develop * mdevelop;
 
 };
@@ -73,7 +77,7 @@ public:
 	string name;
 	int if_matrix; //1为数组，0为变量
 	string type;
-	int offset;
+	int offset;//起始地址
 	matrix_develop *matrix_attribute;
 	symbol(string name,int if_matrix,string type,int offset,matrix_develop *matrix_attribute)
 	{

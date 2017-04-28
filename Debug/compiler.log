@@ -1,8 +1,8 @@
 ﻿  main.cpp
 c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(44): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(52): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(62): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(95): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(47): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(55): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(65): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(98): warning C4018: “<”: 有符号/无符号不匹配
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.pdb (Partial PDB)

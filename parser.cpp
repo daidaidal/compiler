@@ -593,6 +593,7 @@ void parser::make_duizhao()
 	p->duizhao.insert(pair<string, int>("char_type", CHAR_TYPE));
 	p->duizhao.insert(pair<string, int>("void_type", VOID_TYPE));
 	p->duizhao.insert(pair<string, int>("include", INCLUDE));
+	p->duizhao.insert(pair<string, int>("printf", PRINTF)); // printf
 	//标识符
 	p->duizhao.insert(pair<string, int>("id", ID));
 																  //整常数 字符串常数

@@ -109,6 +109,8 @@ int lex::gettoken(char * token)
 		return INCLUDE;
 	else if (!strcmp(token, "void"))
 		return VOID_TYPE;
+	else if (!strcmp(token, "printf"))
+		return PRINTF;
 	else return ID;
 }
 void lex::error_handle(int num)

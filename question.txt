@@ -1,3 +1,53 @@
 真正存有数据的符号表在哪里
 vall规划
-'$'在语法分析时
+'$'在语法分析时ok
+offset 没对 ok
+数组初始化ok
+带空的压入数组什么东西 ok
+没考虑a[1]是数组第二项（赋值语句数组引用用到）ok数组需验证
+各种变量长度 ok
+temp 所占地址优化
+每形成一条语句还原一次
+类型检查
+类型转换不存在的
+else if不存在的
+"assign_statement->matrix_id '=' '{' multi_char '}'无法检验这种错误以及类似的未声明id的赋值语句
+statement                  //在此处解决
+	';'
+	assign_statement ';'
+	declare_statement ';'
+	control_statement
+	print_statement ';'
+按顺序列标号打标签
+void main()
+{
+	int i,j[10];
+	i=1;
+	j[2]=2;
+	/*for(i=1;i<10;i=i+1)
+	{
+		if((i<5)&&(i<7))&&(i==6))
+		{
+			b='c';
+		}
+		else if(i<7)
+		{
+			b='d';
+		}
+		else if(i<9)
+		{
+			b='e';
+		}
+		else
+		{
+			b='f';
+		}
+	}
+	
+	i=10;
+	while(i>1)
+	{
+		i=i-1;
+	}
+	*/
+}

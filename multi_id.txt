@@ -1,0 +1,7 @@
+logic
+	logic '||' logic
+	logic '&&' logic
+	'!' logic
+	'(' logic ')'
+	math_statement logic_op math_statement
+	;

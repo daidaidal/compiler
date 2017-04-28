@@ -12,8 +12,9 @@
 #define CHAR_TYPE 11
 #define VOID_TYPE 12
 #define INCLUDE 13
+#define PRINTF 14
 //标识符
-#define ID 14
+#define ID 15
 //整常数 字符串常数
 #define INT 16
 #define STRING 17

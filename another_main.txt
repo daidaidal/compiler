@@ -7,15 +7,12 @@ void gencode(int result, string op, int arg1, int arg2);
 int duandian = 0;
 int sum_offset = 0;
 int temp_offset = 1000;//存放临时变量地址
-int nextquad = 0;
+int close_width;//最邻近的type的长度
 stack<int> s;
 val_attribute* x[10000];
 int top = -1;
-list<int> int_stack;
-list<char> char_stack;
 map<string, symbol*> symbol_map;
 stack<symbol*> declare_stack;
-int label_count = 0;
 void main()
 {
 	lex *cifa = new lex();
@@ -82,7 +79,7 @@ void main()
 
 				//获得s和count
 				//语义分析
-				semantics(guiyueshi, l);
+				//semantics(guiyueshi, l);
 
 				if (guiyue == "s")
 				{
@@ -124,7 +121,6 @@ void xpush(int m[2])
 	x[top] = val;
 	return;
 }
-
 void enter(string name, int if_matrix, string type, matrix_develop * mdevelop, int width)
 {
 	symbol *t = new symbol(name, if_matrix, type, sum_offset, mdevelop);
@@ -139,11 +135,13 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		x[top]->type = "char";
 		x[top]->width = 1;
+		close_width = 1;
 	}
 	else if (guiyueshi == "type->int_type")
 	{
 		x[top]->type = "int";
 		x[top]->width = 4;
+		close_width = 4;
 	}
 	else if (guiyueshi == "type->void_type")
 	{
@@ -170,9 +168,12 @@ void semantics(string guiyueshi, gloable_variable *l)
 		if (guiyueshi == "multi_id->multi_id ',' matrix_id")
 			top = top - 2;
 	}
-	else if (guiyueshi == "multi_id->assign_statement");
-	else if (guiyueshi == "multi_id->multi_id ',' assign_statement")
-		top = top - 2;
+	else if (guiyueshi == "multi_id->assign_statement" || guiyueshi == "multi_id->multi_id ',' assign_statement")
+	{
+
+
+
+	}
 	else if (guiyueshi == "matrix_id->id multi_weishu")
 	{
 		//x[top-4].vall=?
@@ -182,11 +183,10 @@ void semantics(string guiyueshi, gloable_variable *l)
 		x[top - 1]->if_matrix = 1;
 		x[top - 1]->mdevelop = x[top]->mdevelop;
 		x[top - 1]->name = l->list[x[top - 1]->vall[1]];
-		x[top - 1]->type = ""; //声明语句type为""
-		if (gg != symbol_map.end()) //已经在表里面了,单独的赋值语句
+
+		if (gg != symbol_map.end()) //已经在表里面了
 		{
-			x[top - 1]->if_matrix = 0;
-			x[top - 1]->type = gg->second->type; //单独赋值语句type有值
+			x[top-1]->if_matrix=0;
 			int weishu = x[top]->mdevelop->sum_weishu;
 			int *big = gg->second->matrix_attribute->weishu;
 			int *small = x[top]->mdevelop->weishu;
@@ -210,16 +210,16 @@ void semantics(string guiyueshi, gloable_variable *l)
 				single = 4;
 			else if (t_type == "char")
 				single = 1;
-
-			x[top - 1]->width = single*(sum - 1); //数组该位元素的首地址
-			x[top - 1]->type = gg->second->type;
+			
+			x[top-1]->width = single*(sum-1); //数组该位元素的首地址
+			x[top-1]->type = gg->second->type;
 		}
 		top = top - 1;
 
 	}
 	else if (guiyueshi == "multi_weishu->'[' int ']'")
 	{
-		x[top - 2]->mdevelop = new matrix_develop();
+		x[top-2]->mdevelop = new matrix_develop();
 		x[top - 2]->mdevelop->sum_weishu = 1;
 		x[top - 2]->mdevelop->weishu[1] = x[top - 1]->vall[1];
 		top = top - 2;
@@ -228,125 +228,10 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		int i = x[top - 3]->mdevelop->sum_weishu;
 		x[top - 3]->mdevelop->sum_weishu = i + 1;
-		x[top - 3]->mdevelop->weishu[i + 1] = x[top - 1]->vall[1];
+
+
+		x[top - 3]->mdevelop->weishu[i+1] =x[top - 1]->vall[1];
 		top = top - 3;
-	}
-	//assign_statement
-	else if (guiyueshi == "assign_statement->id '=' char")//不知道是否在符号表中
-	{
-		string name = l->list[x[top - 2]->vall[1]];
-		string char_name = l->char_list[x[top - 2]->vall[1]];
-		map<string, symbol*>::iterator gg = symbol_map.find(name);
-		if (gg != symbol_map.end())
-		{
-			x[top - 2]->addr = gg->second->offset;
-			gencode(x[top - 2]->addr, ":=", char_name.at(1), 0);
-		}
-		else
-		{
-			int offset0 = sum_offset;
-			enter(name, 0, "char", NULL, 1);
-			gencode(offset0, ":=", char_name.at(1), 0);
-		}
-		top = top - 2;
-	}
-	else if (guiyueshi == "assign_statement->id '=' math_statement")//不知道是否在符号表中-----------------
-	{
-		string name = l->list[x[top - 2]->vall[1]];
-		map<string, symbol*>::iterator gg = symbol_map.find(name);
-		if (gg != symbol_map.end())
-		{
-			x[top - 2]->addr = gg->second->offset;
-			gencode(x[top - 2]->addr, "=", x[top]->addr, 0);
-		}
-		else
-		{
-			int offset0 = sum_offset;
-			enter(name, 0, "int", NULL, 4);
-			gencode(offset0, "=", x[top]->addr, 0);
-		}
-		top = top - 2;
-	}
-	else if (guiyueshi == "assign_statement->matrix_id '=' char") //仅为赋值语句,在符号表中
-	{
-		string name = x[top - 2]->name;
-		string char_name = l->char_list[x[top - 2]->vall[1]];
-		map<string, symbol*>::iterator gg = symbol_map.find(name);
-		if (gg != symbol_map.end())
-		{
-			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
-			gencode(x[top - 2]->addr, ":=", char_name.at(1), 0);
-		}
-		else
-			cout << "can't find id while assign_statement->id '=' math_statement";
-		top = top - 2;
-	}
-	else if (guiyueshi == "assign_statement->matrix_id '=' math_statement")//仅为赋值语句,知道在符号表中
-	{
-		map<string, symbol*>::iterator gg = symbol_map.find(l->list[x[top - 2]->vall[1]]);
-		if (gg != symbol_map.end())
-		{
-			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
-			gencode(x[top - 2]->addr, "=", x[top]->addr, 0);
-		}
-		else
-			cout << "can't find id while assign_statement->id '=' math_statement";
-		top = top - 2;
-	}
-	else if (guiyueshi == "assign_statement->matrix_id '=' '{' multi_int '}'") //仅为声明语句
-	{
-		string name = x[top - 4]->name;
-		int j = 1;
-		for (int i = 1; i <= x[top-4]->mdevelop->sum_weishu; i++)
-			j = j*x[top-4]->mdevelop->weishu[i];
-		j = j*4;
-		//enter(string name, int if_matrix, string type, matrix_develop * mdevelop, int width)
-		int offset0 = sum_offset;
-		enter(name, 1, "int", x[top - 4]->mdevelop, j);
-		for (list<int>::iterator gg = int_stack.begin(); gg != int_stack.end(); gg++)
-		{
-			gencode(offset0,":=",*gg,0);
-			offset0 = offset0 + 4;
-		}
-		int_stack.clear();
-		top = top - 4;
-	}
-	else if (guiyueshi == "assign_statement->matrix_id '=' '{' multi_char '}'") //仅为声明语句
-	{
-		string name = x[top - 4]->name;
-		int j = 1;
-		for (int i = 1; i <= x[top - 4]->mdevelop->sum_weishu; i++)
-			j = j*x[top-4]->mdevelop->weishu[i];
-		j = j * 1;
-		//enter(string name, int if_matrix, string type, matrix_develop * mdevelop, int width)
-		int offset0 = sum_offset;
-		enter(name, 1, "char", x[top - 4]->mdevelop, j);
-		for (list<char>::iterator gg = char_stack.begin(); gg != char_stack.end(); gg++)
-		{
-			gencode(offset0, ":=", *gg, 0);
-			offset0 = offset0 + 1;
-		}
-		char_stack.clear();
-		top = top - 4;
-	}
-	//multi_int multi_char
-	else if (guiyueshi == "multi_int->int")
-	{
-		int_stack.push_back(x[top]->vall[1]);
-	}
-	else if (guiyueshi == "multi_int->multi_int ',' int")
-	{
-		int_stack.push_back(x[top]->vall[1]);
-		top = top - 2;
-	}
-	else if (guiyueshi == "multi_char->char")
-	{
-		char_stack.push_back(l->char_list[x[top]->vall[1]][1]);
-	}
-	else if (guiyueshi == "multi_char->multi_char ',' char")
-	{
-		char_stack.push_back(l->char_list[x[top]->vall[1]][1]);
-		top = top - 2;
 	}
 	else if (guiyueshi == "declare_statement->type multi_id")
 	{
@@ -357,7 +242,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 			symbol * s_temp;
 			s_temp = declare_stack.top();
 			declare_stack.pop();
-			enter(s_temp->name, s_temp->if_matrix, type, s_temp->matrix_attribute, s_temp->offset*single);
+			enter(s_temp->name, s_temp->if_matrix,type, s_temp->matrix_attribute, s_temp->offset*single);
 		}
 		top = top - 1;
 	}
@@ -390,7 +275,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		//int的值存到offset中-------------------------------------??
 		x[top]->addr = temp_offset;
-		gencode(x[top]->addr, ":=", x[top]->vall[1], 0);
+		gencode(x[top]->addr,":=",x[top]->vall[1],0);
 		temp_offset = temp_offset + 4;
 	}
 	else if (guiyueshi == "math_basic->'(' math_statement ')'") //gencode
@@ -419,12 +304,12 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_item->math_basic");
 	else if (guiyueshi == "math_item->math_item '*' math_basic")
 	{
-		gencode(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
+		gencode(x[top-2]->addr, "*", x[top-2]->addr, x[top]->addr);
 		top = top - 2;
 	}
 	else if (guiyueshi == "math_item->math_item '/' math_basic")
 	{
-		gencode(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
+		gencode(x[top-2]->addr, "/", x[top-2]->addr, x[top]->addr);
 		top = top - 2;
 	}
 	//math_statement
@@ -443,8 +328,84 @@ void semantics(string guiyueshi, gloable_variable *l)
 		//temp_offset = temp_offset + 4;
 		top = top - 2;
 	}
+	//assign_statement
+	else if (guiyueshi == "assign_statement->id '=' char")//不知道是否在符号表中
+	{
+		string name = l->char_list[x[top - 2]->vall[1]];
+		map<string, symbol*>::iterator gg = symbol_map.find(name);
+		if (gg != symbol_map.end())
+		{
+			x[top - 2]->addr = gg->second->offset;
+			gencode(x[top - 2]->addr, ":=", name.at(0), 0);
+		}
+		else
+			cout << "can't find id while assign_statement->id '=' math_statement";
+		top = top - 2;
+	}
+	else if (guiyueshi == "assign_statement->matrix_id '=' char") //仅为赋值语句,在符号表中
+	{
+		string name = l->char_list[x[top - 2]->vall[1]];
+		map<string, symbol*>::iterator gg = symbol_map.find(name);
+		if (gg != symbol_map.end())
+		{
+			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
+			gencode(x[top - 2]->addr, ":=", name.at(0), 0);
+		}
+		else
+			cout << "can't find id while assign_statement->id '=' math_statement";
+		top = top - 2;
+	}
+	else if (guiyueshi == "assign_statement->id '=' math_statement")//不知道是否在符号表中
+	{
+		map<string, symbol*>::iterator gg = symbol_map.find(l->list[x[top - 2]->vall[1]]);
+		if (gg != symbol_map.end())
+		{
+			x[top - 2]->addr = gg->second->offset;
+			gencode(x[top - 2]->addr, "=", x[top]->addr, 0);
+		}
+		else
+			cout << "can't find id while assign_statement->id '=' math_statement";
+		top = top - 2;
+	}
+	else if (guiyueshi == "assign_statement->matrix_id '=' math_statement")//仅为赋值语句,知道在符号表中
+	{
+		map<string, symbol*>::iterator gg = symbol_map.find(l->list[x[top - 2]->vall[1]]);
+		if (gg != symbol_map.end())
+		{
+			x[top - 2]->addr = gg->second->offset+x[top-2]->width;
+			gencode(x[top - 2]->addr, "=", x[top]->addr, 0);
+		}
+		else
+			cout << "can't find id while assign_statement->id '=' math_statement";
+		top = top - 2;
+	}
+	else if (guiyueshi == "assign_statement->matrix_id '=' '{' multi_int '}'") //仅为声明语句
+	{
+
+	}
+	else if (guiyueshi == "assign_statement->matrix_id '=' '{' multi_char '}'") //仅为声明语句
+	{
+
+	}
+	//multi_int multi_char
+	else if (guiyueshi == "multi_int->int")
+	{
+
+	}
+	else if (guiyueshi == "multi_int->multi_int ',' int")
+	{
+
+	}
+	else if (guiyueshi == "multi_char->char")
+	{
+
+	}
+	else if (guiyueshi == "multi_char->multi_char ',' char")
+	{
+
+	}
 	//logic_op
-	else if (guiyueshi == "logic_op->'>='")
+	else if (guiyueshi == "logic_op->'>='") 
 		x[top]->logic_op = "'>='";
 	else if (guiyueshi == "logic_op->'<='")
 		x[top]->logic_op = "'<='";
@@ -470,49 +431,38 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "logic->'!' logic")
 	{
 		x[top - 1]->addr = x[top]->addr;
-		gencode(x[top - 1]->addr, "!", x[top]->addr, 0);
+		gencode(x[top - 1]->addr, "!", x[top]->addr,0);
 		top = top - 1;
 	}
 	else if (guiyueshi == "logic->'(' logic ')'")
 	{
-		x[top - 2]= x[top - 1];
+		x[top - 2] = x[top - 1];
 		top = top - 2;
 	}
 	else if (guiyueshi == "logic->math_statement logic_op math_statement")
 	{
 		x[top - 2]->addr = temp_offset;
-		gencode(nextquad + 3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);
-		gencode(x[top - 2]->addr, ":=", 0, 0);
-		gencode(nextquad + 2, "goto", 0, 0);
-		gencode(x[top - 2]->addr, ":=", 1, 0);
+		gencode(temp_offset, x[top - 1]->logic_op, x[top - 2]->addr, x[top]->addr);
 		++temp_offset;
 		top = top - 2;
 	}
 	//if_statement
 	else if (guiyueshi == "if_statement->if logic codeblockplus")
 	{
-		//gencode(
-		x[top - 1]->truel = label_count;
-		label_count++;
-		x[top-1]->falsel = 
-		top = top - 2;
-		;
+		
 	}
 	else if (guiyueshi == "if_statement->if logic codeblockplus else codeblockplus")
 	{
-		;
-		top = top - 4;
+		
 	}
 
 	return;
 }
 
-void gencode(int result, string op, int arg1, int arg2)
+void gencode(int result, string op,int arg1,int arg2)
 {
-	cout << nextquad<<": "<<to_string(result) + " " + op + " " + to_string(arg1) + " " + to_string(arg2) << endl;
-	nextquad++;
+	cout << to_string(result) +" "+ op  +" " + to_string(arg1) + " " +  to_string(arg2)<< endl;
 }
-
 /*
 {
 int weishu = x[top]->mdevelop->sum_weishu;
