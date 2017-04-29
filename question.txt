@@ -19,6 +19,7 @@ statement                  //在此处解决
 	control_statement
 	print_statement ';'
 按顺序列标号打标签
+printf等弄汇编的时候再弄
 void main()
 {
 	int i,j[10];

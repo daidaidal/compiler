@@ -5,6 +5,7 @@
 #include <map>
 #include <fstream> 
 #include <math.h>
+#include <list>;
 using namespace std;
 class gloable_variable {
 public:
@@ -58,6 +59,23 @@ public:
 		this->sum_weishu =0;
 	}
 };
+
+class code {
+public:
+	int num;
+	int result;
+	string op;
+	int arg1;
+	int arg2;
+	code(int result, string op, int arg1, int arg2)
+	{
+		this->result = result;
+		this->op = op;
+		this->arg1 = arg1;
+		this->arg2 = arg2;
+	}
+};
+
 class val_attribute {
 public:
 	int vall[2]; //val
@@ -67,11 +85,10 @@ public:
 	int width;
 	string logic_op;
 	int addr;
-	int truel;
-	int falsel;
 	matrix_develop * mdevelop;
-
+	list<code*> codel;
 };
+
 class symbol {
 public:
 	string name;
