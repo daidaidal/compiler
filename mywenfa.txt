@@ -89,12 +89,20 @@ math_basic
 	;
 
 logic
-	logic '||' logic
-	logic '&&' logic
-	'!' logic
+	logic_mid
+	logic '||' logic_mid
+	;
+
+logic_mid
+	logic_basic
+	logic_mid '&&' logic_basic
+	;
+	
+logic_basic
 	'(' logic ')'
+	'!' logic_basic
 	math_statement logic_op math_statement
-	;	
+	;
 	
 logic_op
 	'>='

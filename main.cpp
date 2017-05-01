@@ -510,37 +510,39 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "logic_op->'!='")
 		x[top]->logic_op = "'!='";
 	//logic_statement
-	else if (guiyueshi == "logic->logic '||' logic")
+	else if (guiyueshi == "logic->logic_mid");
+	else if (guiyueshi == "logic->logic '||' logic_mid")
 	{
-		code * temp_code=new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
+		code * temp_code = new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
 	}
-	else if (guiyueshi == "logic->logic '&&' logic")
+	else if (guiyueshi == "logic_mid->logic_basic");
+	else if (guiyueshi == "logic_mid->logic_mid '&&' logic_basic")
 	{
-		code * temp_code=new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
+		code * temp_code = new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
 	}
-	else if (guiyueshi == "logic->'!' logic")
+	else if (guiyueshi == "logic_basic->'(' logic ')'")
+	{
+		x[top - 2] = x[top - 1];
+		top = top - 2;
+	}
+	else if (guiyueshi == "logic_basic->'!' logic_basic")
 	{
 		x[top - 1]->addr = x[top]->addr;
-		code * temp_code=new code(x[top - 1]->addr, "!", x[top]->addr, 0);
-		x[top-1]->codel=x[top]->codel;
+		code * temp_code = new code(x[top - 1]->addr, "!", x[top-1]->addr, 0);
+		x[top - 1]->codel = x[top]->codel;
 		x[top - 1]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 1;
 	}
-	else if (guiyueshi == "logic->'(' logic ')'")
-	{
-		x[top - 2]= x[top - 1];
-		top = top - 2;
-	}
-	else if (guiyueshi == "logic->math_statement logic_op math_statement")
+	else if (guiyueshi == "logic_basic->math_statement logic_op math_statement")
 	{
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		code * temp_code1=new code(-3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);//if a<b goto nextquad+3
@@ -578,7 +580,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		code* temp_code0 = new code(-2, "==", x[top - 3]->addr, 1); 
 		gencode(temp_code0);
-		code * temp_code1 = new code(-(int)(1 + x[top - 2]->codel.size()), "goto", 0, 0);
+		code * temp_code1 = new code(-(int)(2 + x[top - 2]->codel.size()), "goto", 0, 0);
 		gencode(temp_code1);
 		code * temp_code2 = new code(-(int)(1+x[top]->codel.size()), "goto", 0, 0);
 		gencode(temp_code2);
@@ -709,5 +711,36 @@ else if (t_type == "char")
 single = 1;
 x[top]->width = single*sum;
 x[top]->type = gg->second->type;
+}
+//logic
+else if (guiyueshi == "logic->logic '||' logic")
+{
+code * temp_code=new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
+x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
+x[top - 2]->codel.push_back(temp_code);
+gencode(temp_code);
+top = top - 2;
+}
+else if (guiyueshi == "logic->logic '&&' logic")
+{
+code * temp_code=new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
+x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
+x[top - 2]->codel.push_back(temp_code);
+gencode(temp_code);
+top = top - 2;
+}
+else if (guiyueshi == "logic->'!' logic")
+{
+x[top - 1]->addr = x[top]->addr;
+code * temp_code=new code(x[top - 1]->addr, "!", x[top]->addr, 0);
+x[top-1]->codel=x[top]->codel;
+x[top - 1]->codel.push_back(temp_code);
+gencode(temp_code);
+top = top - 1;
+}
+else if (guiyueshi == "logic->'(' logic ')'")
+{
+x[top - 2]= x[top - 1];
+top = top - 2;
 }
 */

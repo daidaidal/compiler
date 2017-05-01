@@ -5,4 +5,19 @@ void main()
 	{
 		i=10;
 	}
+	else 
+	{
+		i=20;
+	}
+
+	int k;
+	for(k=1;k<10;k=k+1)
+	{
+		i=30;
+	}
+
+	while(k>10)
+	{
+		i=40;
+	}
 }
