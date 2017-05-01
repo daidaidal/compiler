@@ -376,7 +376,7 @@ int * lex::token_scan()
 			case '&':ch = getcharl();
 				if (ch == '&')
 				{
-					ret[0] = ADD;
+					ret[0] = AND;
 					ret[1] = 0;
 					return ret;
 				}

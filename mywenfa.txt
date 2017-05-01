@@ -40,7 +40,7 @@ multi_id
 	multi_id ',' assign_statement
 	id
 	matrix_id
-	assign_statement;
+	assign_statement
 	;
 
 assign_statement

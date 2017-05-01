@@ -5,7 +5,7 @@
 #include <map>
 #include <fstream> 
 #include <math.h>
-#include <list>;
+#include <list>
 using namespace std;
 class gloable_variable {
 public:

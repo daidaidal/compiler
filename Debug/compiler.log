@@ -1,9 +1,2 @@
-﻿  main.cpp
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-c:\users\daisf\documents\cworkspace\compiler\compiler\lex.h(8): warning C4067: 预处理器指令后有意外标记 - 应输入换行符
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(49): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(57): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(67): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(100): warning C4018: “<”: 有符号/无符号不匹配
-  compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
+﻿  compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.pdb (Partial PDB)

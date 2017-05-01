@@ -4,6 +4,7 @@ using namespace std;
 void semantics(string guiyueshi, gloable_variable *l);
 void xpush(int m[2]);
 void gencode(code* c);
+void mergel();
 int duandian = 0;
 int sum_offset = 0;
 int temp_offset = 1000;//存放临时变量地址
@@ -14,8 +15,8 @@ list<int> int_stack;
 list<char> char_stack;
 map<string, symbol*> symbol_map;
 stack<symbol*> declare_stack;
-int label_count = 0;
-int label_flag = 0; // 如果label flag为1则在下一条生成的三地址吗前面加上label
+int code_count = 0;
+list<code*> sum_code;
 void main()
 {
 	lex *cifa = new lex();
@@ -89,6 +90,7 @@ void main()
 					cout << "success" << endl;
 					break;
 				}
+				
 				while (count != 0)
 				{
 					s.pop();
@@ -110,7 +112,7 @@ void main()
 
 	}
 
-
+	mergel();
 	cout << endl;
 	return;
 }
@@ -168,11 +170,17 @@ void semantics(string guiyueshi, gloable_variable *l)
 		symbol* s_temp = new symbol(name, 1, "", j, x[top]->mdevelop); //暂存数组总大小没有乘类型长度
 		declare_stack.push(s_temp);
 		if (guiyueshi == "multi_id->multi_id ',' matrix_id")
+		{
+			x[top - 2]->codel.splice(x[top - 2]->codel.end(),x[top]->codel);
 			top = top - 2;
+		}
 	}
 	else if (guiyueshi == "multi_id->assign_statement");
 	else if (guiyueshi == "multi_id->multi_id ',' assign_statement")
+	{
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		top = top - 2;
+	}
 	else if (guiyueshi == "matrix_id->id multi_weishu")
 	{
 		//x[top-4].vall=?
@@ -242,6 +250,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 			x[top - 2]->addr = gg->second->offset;
 			code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), 0);
 			x[top - 2]->codel.push_back(temp_code);
+			gencode(temp_code);
 		}
 		else
 		{
@@ -249,6 +258,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 			enter(name, 0, "char", NULL, 1);
 			code * temp_code=new code(offset0, ":=", char_name.at(1), 0);
 			x[top - 2]->codel.push_back(temp_code);
+			gencode(temp_code);
 		}
 		top = top - 2;
 	}
@@ -269,7 +279,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 			int offset0 = sum_offset;
 			enter(name, 0, "int", NULL, 4);
 			code * temp_code=new code(offset0, "=", x[top]->addr, 0);
-			x[top - 2]->codel.merge(x[top]->codel);
+			x[top - 2]->codel.splice(x[top - 2]->codel.end(),x[top]->codel);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
 		}
@@ -298,7 +308,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		{
 			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
 			code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, 0);
-			x[top - 2]->codel.merge(x[top]->codel);
+			x[top - 2]->codel.splice(x[top - 2]->codel.end(),x[top]->codel);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
 		}
@@ -319,7 +329,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		for (list<int>::iterator gg = int_stack.begin(); gg != int_stack.end(); gg++)
 		{
 			code * temp_code=new code(offset0,":=",*gg,0);
-			x[top - 4]->codel.merge(x[top - 1]->codel);
+			x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top - 1]->codel);
 			x[top - 4]->codel.push_back(temp_code);
 			offset0 = offset0 + 4;
 			gencode(temp_code);
@@ -340,7 +350,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		for (list<char>::iterator gg = char_stack.begin(); gg != char_stack.end(); gg++)
 		{
 			code * temp_code=new code(offset0, ":=", *gg, 0);
-			x[top - 4]->codel.merge(x[top - 1]->codel);
+			x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top - 1]->codel);
 			x[top - 4]->codel.push_back(temp_code);
 			offset0 = offset0 + 1;
 			gencode(temp_code);
@@ -378,6 +388,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 			declare_stack.pop();
 			enter(s_temp->name, s_temp->if_matrix, type, s_temp->matrix_attribute, s_temp->offset*single);
 		}
+		x[top - 1]->codel = x[top]->codel;
 		top = top - 1;
 	}
 	//数学运算 math_basic
@@ -450,7 +461,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_item->math_item '*' math_basic")
 	{
 		code * temp_code=new code(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
-		x[top-2]->codel.merge(x[top]->codel);
+		x[top-2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
@@ -458,7 +469,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_item->math_item '/' math_basic")
 	{
 		code * temp_code=new code(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
@@ -469,7 +480,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		//x[top - 2]->addr = temp_offset;
 		code * temp_code=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		//temp_offset = temp_offset + 4;
@@ -479,7 +490,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		//x[top - 2]->addr = temp_offset;
 		code * temp_code=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		//temp_offset = temp_offset + 4;
@@ -502,7 +513,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "logic->logic '||' logic")
 	{
 		code * temp_code=new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
@@ -510,7 +521,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "logic->logic '&&' logic")
 	{
 		code * temp_code=new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
 		top = top - 2;
@@ -531,9 +542,9 @@ void semantics(string guiyueshi, gloable_variable *l)
 	}
 	else if (guiyueshi == "logic->math_statement logic_op math_statement")
 	{
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
+		code * temp_code1=new code(-3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);//if a<b goto nextquad+3
 		x[top - 2]->addr = temp_offset;
-		x[top - 2]->codel.merge(x[top]->codel);
-		code * temp_code1=new code(-3, "l"+x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);//if a<b goto nextquad+3
 		x[top - 2]->codel.push_back(temp_code1);
 		gencode(temp_code1);
 		code * temp_code2=new code(x[top - 2]->addr, ":=", 0, 0);
@@ -559,7 +570,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		x[top - 2]->codel = x[top - 1]->codel;
 		x[top - 2]->codel.push_back(temp_code0);
 		x[top - 2]->codel.push_back(temp_code1);
-		x[top - 2]->codel.merge(x[top]->codel);
+		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 
 		top = top - 2;	
 	}
@@ -575,9 +586,9 @@ void semantics(string guiyueshi, gloable_variable *l)
 		x[top - 4]->codel = x[top - 3]->codel;   //b.code
 		x[top - 4]->codel.push_back(temp_code0); // if b==1 goto ture
 		x[top - 4]->codel.push_back(temp_code1); // goto false
-		x[top - 4]->codel.merge(x[top - 2]->codel);  // c1.code
+		x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top - 2]->codel);  // c1.code
 		x[top - 4]->codel.push_back(temp_code2); //goto end
-		x[top - 4]->codel.merge(x[top]->codel); //c2.code
+		x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top]->codel); //c2.code
 
 		top = top - 4;
 	}
@@ -594,7 +605,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		x[top - 4]->codel = x[top - 2]->codel;      //b.code
 		x[top - 4]->codel.push_back(temp_code0);    //if b==true goto 
 		x[top - 4]->codel.push_back(temp_code1);    //goto end
-		x[top - 4]->codel.merge(x[top]->codel);     //s.code
+		x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top]->codel);     //s.code
 		x[top - 4]->codel.push_back(temp_code2);	//goto begin
 
 		top = top - 4;
@@ -609,11 +620,11 @@ void semantics(string guiyueshi, gloable_variable *l)
 		gencode(temp_code2);
 
 		x[top - 8]->codel = x[top - 6]->codel;      // assign1
-		x[top - 8]->codel.merge(x[top - 4]->codel); // logic
+		x[top - 8]->codel.splice(x[top - 8]->codel.end(), x[top - 4]->codel); // logic
 		x[top - 8]->codel.push_back(temp_code0);    // if b==1 goto true
 		x[top - 8]->codel.push_back(temp_code1);    // goto end
-		x[top - 8]->codel.merge(x[top]->codel);     // s
-		x[top - 8]->codel.merge(x[top-2]->codel);   // assign2
+		x[top - 8]->codel.splice(x[top - 8]->codel.end(), x[top]->codel);     // s
+		x[top - 8]->codel.splice(x[top - 8]->codel.end(), x[top-2]->codel);   // assign2
 		x[top - 8]->codel.push_back(temp_code2);	// goto begin
 
 		top = top - 8;
@@ -628,7 +639,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "codeblock->statement");
 	else if (guiyueshi == "codeblock->statement codeblock")
 	{
-		x[top - 1]->codel.merge(x[top]->codel);
+		x[top - 1]->codel.splice(x[top - 1]->codel.end(), x[top]->codel);
 		top = top - 1;
 	}
 	else if (guiyueshi == "codeblockplus->'{' codeblock '}'")
@@ -639,6 +650,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "s->type main '(' ')' codeblockplus")
 	{
 		x[top - 4]->codel = x[top]->codel;
+		sum_code = x[top - 4]->codel;
 		top = top - 4;
 	}
 	return;
@@ -646,8 +658,30 @@ void semantics(string guiyueshi, gloable_variable *l)
 void gencode(code* c)
 {
 	cout<<to_string(c->result) + " " + c->op + " " + to_string(c->arg1) + " " + to_string(c->arg2) << endl;
+	code_count++;
 }
 
+void mergel()
+{
+	list<code*>::iterator gg;
+	int num = 1;
+	for (gg = sum_code.begin(); gg != sum_code.end();gg++)
+	{
+		code * l = *gg;
+		l->num = num;
+		if (l->result < 0)
+		{
+			if (l->op == "rgoto")
+			{
+				l->result = num + l->result;
+			}
+			else
+				l->result = num - l->result;
+		}
+		cout << num<<":   "<<to_string(l->result) + " " + l->op + " " + to_string(l->arg1) + " " + to_string(l->arg2) << endl;
+		num++;
+	}
+}
 /*
 {
 int weishu = x[top]->mdevelop->sum_weishu;
@@ -677,8 +711,3 @@ x[top]->width = single*sum;
 x[top]->type = gg->second->type;
 }
 */
-
-
-
-
-

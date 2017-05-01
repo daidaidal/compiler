@@ -7,7 +7,6 @@
 #include <map>
 #include <stack>
 #include <set>
-#include <list>
 #include <iostream>
 #define BUFFERSIZE 10000
 using namespace std;
