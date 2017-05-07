@@ -6,6 +6,7 @@
 #include <fstream> 
 #include <math.h>
 #include <list>
+#include <set>
 using namespace std;
 class gloable_variable {
 public:
@@ -103,6 +104,21 @@ public:
 		this->type = type;
 		this->offset = offset;
 		this->matrix_attribute = matrix_attribute;
+	}
+};
+
+class picnode {
+public:
+	int num;
+	set<int> qian;
+	set<int> hou;
+	set<int> use;
+	set<int> def;
+	set<int> in;
+	set<int> out;
+	picnode(int num)
+	{
+		this->num = num;
 	}
 };
 

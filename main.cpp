@@ -1,13 +1,17 @@
 #include "paser.h"
 #include <iostream>
+#define TEMP_INT 1100
+#define TEMP_BOOL 1000
 using namespace std;
 void semantics(string guiyueshi, gloable_variable *l);
 void xpush(int m[2]);
 void gencode(code* c);
 void mergel();
+void make_pic();
 int duandian = 0;
 int sum_offset = 0;
-int temp_offset = 1000;//存放临时变量地址
+int temp_offset_bool = TEMP_INT;//存放临时变量地址
+int temp_offset_int = TEMP_BOOL;//存放临时变量地址
 stack<int> s;
 val_attribute* x[10000];
 int top = -1;
@@ -17,6 +21,10 @@ map<string, symbol*> symbol_map;
 stack<symbol*> declare_stack;
 int code_count = 0;
 list<code*> sum_code;
+list<code*> big_code[100];
+picnode * pn[100];
+map<int, int> pic_map;//行号--所属基本块号
+int node_count;//流图中有多少个基本快
 void main()
 {
 	lex *cifa = new lex();
@@ -113,10 +121,109 @@ void main()
 	}
 
 	mergel();
+	make_pic();
+
+
 	cout << endl;
 	return;
 }
 
+//计算活跃变量
+void make_pic()
+{
+	list<code*> codel;
+	codel.splice(codel.begin(), sum_code);
+	list<code*>::iterator gg;
+	set<int> s;
+	for (gg = codel.begin(); gg != codel.end(); gg++)
+	{
+		code * l = *gg;
+		if (l->op == "goto")
+			s.insert(l->result);
+	}
+	s.insert(1);
+	list<code*> temp;
+	node_count = 0;
+	int hangcount = 1;
+	for (gg = codel.begin(); gg != codel.end(); gg++)
+	{
+		code * l = *gg;
+		int num = *s.begin();
+		if (l->num == num)
+		{
+			picnode *i = new picnode(node_count);
+			pn[node_count] = i;
+			s.erase(num);
+			big_code[node_count] = temp;
+			temp.clear();
+			node_count++;
+		}
+		temp.push_back(l);
+		pic_map.insert(pair<int, int>(hangcount, node_count + 1));
+		hangcount++;
+	}
+	if (temp.size() != 0)
+		big_code[node_count] = temp;
+	//建立关系流图 pn
+	hangcount = 1;
+	for (gg = codel.begin(); gg != codel.end(); gg++)
+	{
+		code *l = *gg;
+		if (l->op == "goto")
+		{
+			int this_node = pic_map.find(hangcount)->second;
+			int that_node = l->num;
+			pn[this_node]->hou.insert(that_node);
+			pn[that_node]->qian.insert(this_node);
+		}
+		hangcount++;
+	}
+	//计算每个基本快的use和def
+	for (int i = 1; i <= node_count; i++)
+	{
+		list<code*> l = big_code[i];
+		list<code*>::iterator gg;
+		for (gg = l.begin(); gg != l.end(); gg++)
+		{
+			code * ll = *gg;
+			if (ll->op == ":=" || ll->op == "=" || ll->op == "++" || ll->op == "--" || ll->op == "+" || ll->op == "-" || ll->op == "*" || ll->op == "/" || ll->op == "&&" || ll->op == "||" || ll->op == "!")
+			{
+				pn[i]->def.insert(ll->result);
+				if (ll->arg1 != -1)
+					pn[i]->use.insert(ll->arg1);
+				if (ll->arg2 != -1)
+					pn[i]->use.insert(ll->arg2);
+			}
+		}
+	}
+	//计算活跃变量
+	bool flag = true;
+	while (flag)
+	{
+		flag = false;
+		for (int i = node_count; i >= node_count; i--)
+		{
+			//计算out
+			for (set<int>::iterator m = pn[i]->hou.begin(); m != pn[i]->hou.end(); m++)
+			{
+				int hou= *m;
+				pn[i]->out.insert(pn[hou]->in.begin(), pn[hou]->in.end());
+			}
+			//计算in
+			int size1 = pn[i]->in.size();
+			//加入use
+			pn[i]->in.insert(pn[i]->use.begin(), pn[i]->use.end());
+			//out-def
+			pn[i]->out.erase(pn[i]->def.begin(), pn[i]->def.end());
+			//加入out
+			pn[i]->in.insert(pn[i]->out.begin(), pn[i]->out.end());
+			int size2 = pn[i]->in.size();
+			if (size2 != size1)
+				flag = true;
+		}
+	}
+
+}
 void xpush(int m[2])
 {
 	top++;
@@ -248,7 +355,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		if (gg != symbol_map.end())
 		{
 			x[top - 2]->addr = gg->second->offset;
-			code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), 0);
+			code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
 		}
@@ -256,7 +363,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		{
 			int offset0 = sum_offset;
 			enter(name, 0, "char", NULL, 1);
-			code * temp_code=new code(offset0, ":=", char_name.at(1), 0);
+			code * temp_code=new code(offset0, ":=", char_name.at(1), -1);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
 		}
@@ -269,7 +376,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		if (gg != symbol_map.end())
 		{
 			x[top - 2]->addr = gg->second->offset;
-			code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, 0);
+			code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
 			x[top - 2]->codel = x[top]->codel;
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
@@ -278,7 +385,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		{
 			int offset0 = sum_offset;
 			enter(name, 0, "int", NULL, 4);
-			code * temp_code=new code(offset0, "=", x[top]->addr, 0);
+			code * temp_code=new code(offset0, "=", x[top]->addr, -1);
 			x[top - 2]->codel.splice(x[top - 2]->codel.end(),x[top]->codel);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
@@ -293,7 +400,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		if (gg != symbol_map.end())
 		{
 			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
-			code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), 0);
+			code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
 		}
@@ -307,7 +414,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		if (gg != symbol_map.end())
 		{
 			x[top - 2]->addr = gg->second->offset + x[top - 2]->width;
-			code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, 0);
+			code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
 			x[top - 2]->codel.splice(x[top - 2]->codel.end(),x[top]->codel);
 			x[top - 2]->codel.push_back(temp_code);
 			gencode(temp_code);
@@ -328,7 +435,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		enter(name, 1, "int", x[top - 4]->mdevelop, j);
 		for (list<int>::iterator gg = int_stack.begin(); gg != int_stack.end(); gg++)
 		{
-			code * temp_code=new code(offset0,":=",*gg,0);
+			code * temp_code=new code(offset0,":=",*gg,-1);
 			x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top - 1]->codel);
 			x[top - 4]->codel.push_back(temp_code);
 			offset0 = offset0 + 4;
@@ -349,7 +456,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 		enter(name, 1, "char", x[top - 4]->mdevelop, j);
 		for (list<char>::iterator gg = char_stack.begin(); gg != char_stack.end(); gg++)
 		{
-			code * temp_code=new code(offset0, ":=", *gg, 0);
+			code * temp_code=new code(offset0, ":=", *gg, -1);
 			x[top - 4]->codel.splice(x[top - 4]->codel.end(), x[top - 1]->codel);
 			x[top - 4]->codel.push_back(temp_code);
 			offset0 = offset0 + 1;
@@ -419,11 +526,11 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_basic->int")//
 	{
 		//int的值存到offset中-------------------------------------??
-		x[top]->addr = temp_offset;
-		code * temp_code=new code(x[top]->addr, ":=", x[top]->vall[1], 0);
+		x[top]->addr = temp_offset_int;
+		code * temp_code=new code(x[top]->addr, ":=", x[top]->vall[1], -1);
 		x[top]->codel.push_back(temp_code);
 		gencode(temp_code);
-		temp_offset = temp_offset + 4;
+		temp_offset_int = temp_offset_int + 4;
 	}
 	else if (guiyueshi == "math_basic->'(' math_statement ')'") //code * temp_code=new code
 	{
@@ -433,7 +540,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_basic->'-' math_basic")
 	{
 		x[top - 1] = x[top];
-		code * temp_code=new code(x[top - 1]->addr, "-", x[top - 1]->addr, 0);//统一单操作符时仅调用arg1
+		code * temp_code=new code(x[top - 1]->addr, "-", x[top - 1]->addr, -1);//统一单操作符时仅调用arg1
 		x[top]->codel.push_back(temp_code);
 		x[top - 1]->codel = x[top]->codel;
 		gencode(temp_code);
@@ -442,7 +549,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_basic->'++' math_basic") //code * temp_code=new code -------------------先考虑不改变元变量值----------------------
 	{
 		x[top - 1] = x[top];
-		code * temp_code=new code(x[top - 1]->addr, "++", x[top - 1]->addr, 0);//统一单操作符时仅调用arg1
+		code * temp_code=new code(x[top - 1]->addr, "++", x[top - 1]->addr, -1);//统一单操作符时仅调用arg1
 		x[top]->codel.push_back(temp_code);
 		x[top - 1]->codel = x[top]->codel;
 		gencode(temp_code);
@@ -451,7 +558,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_basic->'--' math_basic")
 	{
 		x[top - 1] = x[top];
-		code * temp_code=new code(x[top - 1]->addr, "--", x[top - 1]->addr, 0);//统一单操作符时仅调用arg1
+		code * temp_code=new code(x[top - 1]->addr, "--", x[top - 1]->addr, -1);//统一单操作符时仅调用arg1
 		x[top]->codel.push_back(temp_code);
 		x[top - 1]->codel = x[top]->codel;
 		gencode(temp_code);
@@ -478,22 +585,18 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "math_statement->math_item");
 	else if (guiyueshi == "math_statement->math_statement '+' math_item")
 	{
-		//x[top - 2]->addr = temp_offset;
 		code * temp_code=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
-		//temp_offset = temp_offset + 4;
 		top = top - 2;
 	}
 	else if (guiyueshi == "math_statement->math_statement '-' math_item")
 	{
-		//x[top - 2]->addr = temp_offset;
 		code * temp_code=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		x[top - 2]->codel.push_back(temp_code);
 		gencode(temp_code);
-		//temp_offset = temp_offset + 4;
 		top = top - 2;
 	}
 	//logic_op
@@ -536,7 +639,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	else if (guiyueshi == "logic_basic->'!' logic_basic")
 	{
 		x[top - 1]->addr = x[top]->addr;
-		code * temp_code = new code(x[top - 1]->addr, "!", x[top-1]->addr, 0);
+		code * temp_code = new code(x[top - 1]->addr, "!", x[top-1]->addr, -1);
 		x[top - 1]->codel = x[top]->codel;
 		x[top - 1]->codel.push_back(temp_code);
 		gencode(temp_code);
@@ -546,19 +649,19 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		x[top - 2]->codel.splice(x[top - 2]->codel.end(), x[top]->codel);
 		code * temp_code1=new code(-3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);//if a<b goto nextquad+3
-		x[top - 2]->addr = temp_offset;
+		x[top - 2]->addr = temp_offset_bool;
 		x[top - 2]->codel.push_back(temp_code1);
 		gencode(temp_code1);
-		code * temp_code2=new code(x[top - 2]->addr, ":=", 0, 0);
+		code * temp_code2=new code(x[top - 2]->addr, ":=", 0, -1);
 		x[top - 2]->codel.push_back(temp_code2);
 		gencode(temp_code2);
-		code * temp_code3=new code(-2, "goto", 0, 0); //生成全部三地址码的时候-n表示去当前num的基础上加n的位置
+		code * temp_code3=new code(-2, "goto", -1, -1); //生成全部三地址码的时候-n表示去当前num的基础上加n的位置
 		x[top - 2]->codel.push_back(temp_code3);
 		gencode(temp_code3);
-		code * temp_code4=new code(x[top - 2]->addr, ":=", 1, 0);
+		code * temp_code4=new code(x[top - 2]->addr, ":=", 1, -1);
 		x[top - 2]->codel.push_back(temp_code4);
 		gencode(temp_code4);
-		++temp_offset;
+		++temp_offset_bool;
 		top = top - 2;
 	}
 	//if_statement
@@ -566,7 +669,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		code * temp_code0 = new code(-2, "==", x[top - 1]->addr, 1);   //0
 		gencode(temp_code0);
-		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 1), "goto", 0, 0); //1
+		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 1), "goto", -1, -1); //1
 																	 //s.code.begin //2
 		gencode(temp_code1);
 		x[top - 2]->codel = x[top - 1]->codel;
@@ -580,9 +683,9 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		code* temp_code0 = new code(-2, "==", x[top - 3]->addr, 1); 
 		gencode(temp_code0);
-		code * temp_code1 = new code(-(int)(2 + x[top - 2]->codel.size()), "goto", 0, 0);
+		code * temp_code1 = new code(-(int)(2 + x[top - 2]->codel.size()), "goto", -1, -1);
 		gencode(temp_code1);
-		code * temp_code2 = new code(-(int)(1+x[top]->codel.size()), "goto", 0, 0);
+		code * temp_code2 = new code(-(int)(1+x[top]->codel.size()), "goto", -1, -1);
 		gencode(temp_code2);
 
 		x[top - 4]->codel = x[top - 3]->codel;   //b.code
@@ -599,9 +702,9 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		code * temp_code0 = new code(-2, "==", x[top - 2]->addr, 1);
 		gencode(temp_code0);
-		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 2), "goto", 0, 0);
+		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 2), "goto", -1, -1);
 		gencode(temp_code1);
-		code * temp_code2 = new code(-(int)(2 + x[top]->codel.size() + x[top - 2]->codel.size()), "rgoto", 0, 0);
+		code * temp_code2 = new code(-(int)(2 + x[top]->codel.size() + x[top - 2]->codel.size()), "rgoto", -1, -1);
 		gencode(temp_code2);
 
 		x[top - 4]->codel = x[top - 2]->codel;      //b.code
@@ -616,9 +719,9 @@ void semantics(string guiyueshi, gloable_variable *l)
 	{
 		code * temp_code0 = new code(-2,"==",x[top-4]->addr,1);
 		gencode(temp_code0);
-		code * temp_code1 = new code(-(int)(x[top]->codel.size()+x[top-2]->codel.size() + 2), "goto", 0, 0);
+		code * temp_code1 = new code(-(int)(x[top]->codel.size()+x[top-2]->codel.size() + 2), "goto", -1, -1);
 		gencode(temp_code1);
-		code * temp_code2 = new code(-(int)(x[top]->codel.size() + x[top - 2]->codel.size()+ x[top - 4]->codel.size() + 2), "rgoto", 0, 0);
+		code * temp_code2 = new code(-(int)(x[top]->codel.size() + x[top - 2]->codel.size()+ x[top - 4]->codel.size() + 2), "rgoto", -1, -1);
 		gencode(temp_code2);
 
 		x[top - 8]->codel = x[top - 6]->codel;      // assign1
@@ -667,6 +770,8 @@ void mergel()
 {
 	list<code*>::iterator gg;
 	int num = 1;
+	ofstream o;
+	o.open("C:\\Users\\daisf\\Documents\\cworkspace\\compiler\\compiler\\quatriple.txt");
 	for (gg = sum_code.begin(); gg != sum_code.end();gg++)
 	{
 		code * l = *gg;
@@ -676,13 +781,17 @@ void mergel()
 			if (l->op == "rgoto")
 			{
 				l->result = num + l->result;
+				l->op = "goto";
 			}
 			else
 				l->result = num - l->result;
 		}
-		cout << num<<":   "<<to_string(l->result) + " " + l->op + " " + to_string(l->arg1) + " " + to_string(l->arg2) << endl;
+		//cout << num<<":   "<<to_string(l->result) + " " + l->op + " " + to_string(l->arg1) + " " + to_string(l->arg2) << endl;
+		string out = to_string(num) + " " + to_string(l->result) + " " + l->op + " " + to_string(l->arg1) + " " + to_string(l->arg2) + '\n';
+		o << out;
 		num++;
 	}
+	o.close();
 }
 /*
 {

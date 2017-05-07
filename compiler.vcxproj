@@ -129,6 +129,7 @@
     <Text Include="mywenfa.txt" />
     <Text Include="bookwenfa.txt" />
     <Text Include="test_first.txt" />
+    <Text Include="三元组语法.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
