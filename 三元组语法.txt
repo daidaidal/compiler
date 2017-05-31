@@ -1,40 +1,40 @@
-code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
-code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
-code * temp_code=new code(x[top - 1]->addr, "-", x[top - 1]->addr, -1)
-code * temp_code=new code(x[top - 1]->addr, "++", x[top - 1]->addr, -1);
-code * temp_code=new code(x[top - 1]->addr, "--", x[top - 1]->addr, -1)
-code * temp_code=new code(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 1]->addr, "!", x[top-1]->addr, -1);
+=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
+=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
+=new code(x[top - 1]->addr, "-", x[top - 1]->addr, -1)
+=new code(x[top - 1]->addr, "++", x[top - 1]->addr, -1);
+=new code(x[top - 1]->addr, "--", x[top - 1]->addr, -1)
+=new code(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 1]->addr, "!", x[top-1]->addr, -1);
 code * temp_code1=new code(-3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);
 code * temp_code3=new code(-2, "goto", -1, -1); 
 code * temp_code0 = new code(-2, "==", x[top - 1]->addr, 1);
 
 
 
-code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
-code * temp_code=new code(offset0, ":=", char_name.at(1), -1);
-code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
-code * temp_code=new code(offset0, "=", x[top]->addr, -1);
-code * temp_code=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
-code * temp_code=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
-code * temp_code=new code(offset0,":=",*gg,-1);
-code * temp_code=new code(offset0, ":=", *gg, -1);
-code * temp_code=new code(x[top]->addr, ":=", x[top]->vall[1], -1);
-code * temp_code=new code(x[top - 1]->addr, "-", x[top - 1]->addr, -1)
-code * temp_code=new code(x[top - 1]->addr, "++", x[top - 1]->addr, -1);
-code * temp_code=new code(x[top - 1]->addr, "--", x[top - 1]->addr, -1)
-code * temp_code=new code(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
-code * temp_code=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
-code * temp_code = new code(x[top - 1]->addr, "!", x[top-1]->addr, -1);
+=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
+=new code(offset0, ":=", char_name.at(1), -1);
+=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
+=new code(offset0, "=", x[top]->addr, -1);
+=new code(x[top - 2]->addr, ":=", char_name.at(1), -1);
+=new code(x[top - 2]->addr, "=", x[top]->addr, -1);
+=new code(offset0,":=",*gg,-1);
+=new code(offset0, ":=", *gg, -1);
+=new code(x[top]->addr, ":=", x[top]->vall[1], -1);
+=new code(x[top - 1]->addr, "-", x[top - 1]->addr, -1)
+=new code(x[top - 1]->addr, "++", x[top - 1]->addr, -1);
+=new code(x[top - 1]->addr, "--", x[top - 1]->addr, -1)
+=new code(x[top - 2]->addr, "*", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "/", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "+", x[top - 2]->addr, x[top]->addr);
+=new code(x[top - 2]->addr, "-", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 2]->addr, "||", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 2]->addr, "&&", x[top - 2]->addr, x[top]->addr);
+ = new code(x[top - 1]->addr, "!", x[top-1]->addr, -1);
 code * temp_code1=new code(-3, x[top - 1]->logic_op,x[top-2]->addr,x[top]->addr);
 code * temp_code2=new code(x[top - 2]->addr, ":=", 0, -1);
 code * temp_code3=new code(-2, "goto", -1, -1); 

@@ -24,7 +24,6 @@ public:
 	{
 		this->symbol.insert(symbol.begin(), symbol.end());
 	}
-
 };
 class gloable_variablep {
 public:

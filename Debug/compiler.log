@@ -1,8 +1,9 @@
 ﻿  main.cpp
 c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp : warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(53): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(61): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(71): warning C4018: “<”: 有符号/无符号不匹配
-c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(105): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(64): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(72): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(82): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(116): warning C4018: “<”: 有符号/无符号不匹配
+c:\users\daisf\documents\cworkspace\compiler\compiler\main.cpp(897): warning C4819: 该文件包含不能在当前代码页(936)中表示的字符。请将该文件保存为 Unicode 格式以防止数据丢失
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.exe
   compiler.vcxproj -> C:\Users\daisf\Documents\cworkspace\compiler\Debug\compiler.pdb (Partial PDB)

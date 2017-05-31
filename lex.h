@@ -64,6 +64,7 @@ public:
 class code {
 public:
 	int num;
+	int node_num;
 	int result;
 	string op;
 	int arg1;
@@ -119,6 +120,16 @@ public:
 	picnode(int num)
 	{
 		this->num = num;
+	}
+};
+
+class sys {
+public:
+	set<int> yinyong;
+	set<int> address;
+	sys(int address)
+	{
+		this->address.insert(address);
 	}
 };
 

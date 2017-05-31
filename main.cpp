@@ -3,11 +3,15 @@
 #define TEMP_INT 1100
 #define TEMP_BOOL 1000
 using namespace std;
+ofstream o;;
 void semantics(string guiyueshi, gloable_variable *l);
 void xpush(int m[2]);
 void gencode(code* c);
 void mergel();
 void make_pic();
+void make_assem();
+string make_op(string op);
+int getres(code * l);
 int duandian = 0;
 int sum_offset = 0;
 int temp_offset_bool = TEMP_INT;//存放临时变量地址
@@ -17,13 +21,15 @@ val_attribute* x[10000];
 int top = -1;
 list<int> int_stack;
 list<char> char_stack;
-map<string, symbol*> symbol_map;
+map<string, symbol*> symbol_map;//名字-符号表
+map<int, sys*> symbol_map2;//汇编符号表地址-符号表 类型 后续引用 地址描述符
+set<int> res[16];
 stack<symbol*> declare_stack;
 int code_count = 0;
 list<code*> sum_code;
 list<code*> big_code[100];
-picnode * pn[100];
-map<int, int> pic_map;//行号--所属基本块号
+picnode * liutu[100];
+map<int, int> find_node;//行号--所属基本块号
 int node_count;//流图中有多少个基本快
 void main()
 {
@@ -122,7 +128,7 @@ void main()
 
 	mergel();
 	make_pic();
-
+	make_assem();
 
 	cout << endl;
 	return;
@@ -138,7 +144,7 @@ void make_pic()
 	for (gg = codel.begin(); gg != codel.end(); gg++)
 	{
 		code * l = *gg;
-		if (l->op == "goto")
+		if (l->op == "goto"||l->op == "'>='" || l->op == "'<='" || l->op == "'>'" || l->op == "'<'" || l->op == "'=='" || l->op == "'!='")
 			s.insert(l->result);
 	}
 	s.insert(1);
@@ -148,35 +154,47 @@ void make_pic()
 	for (gg = codel.begin(); gg != codel.end(); gg++)
 	{
 		code * l = *gg;
-		int num = *s.begin();
-		if (l->num == num)
+		int num = -1;
+		if (s.size() != 0)
+			num = *s.begin();
+		if (l->num == num && num != -1)
 		{
-			picnode *i = new picnode(node_count);
-			pn[node_count] = i;
+			liutu[node_count] = new picnode(node_count);
 			s.erase(num);
 			big_code[node_count] = temp;
 			temp.clear();
 			node_count++;
 		}
+		l->node_num = node_count;
 		temp.push_back(l);
-		pic_map.insert(pair<int, int>(hangcount, node_count + 1));
+		find_node.insert(pair<int, int>(hangcount, node_count));
 		hangcount++;
 	}
 	if (temp.size() != 0)
+	{
 		big_code[node_count] = temp;
-	//建立关系流图 pn
-	hangcount = 1;
+		liutu[node_count] = new picnode(node_count);
+	}
+	//建立关系流图 liutu
+	int i = 1;
 	for (gg = codel.begin(); gg != codel.end(); gg++)
 	{
 		code *l = *gg;
-		if (l->op == "goto")
+		if (l->op == "goto" ||l->op == "'>='" || l->op == "'<='" || l->op == "'>'" || l->op == "'<'" || l->op == "'=='" || l->op == "'!='")
 		{
-			int this_node = pic_map.find(hangcount)->second;
-			int that_node = l->num;
-			pn[this_node]->hou.insert(that_node);
-			pn[that_node]->qian.insert(this_node);
+			int this_node = find_node.find(l->num)->second;
+			int that_node = find_node.find(l->result)->second;
+			if (this_node == that_node)
+				continue;
+			liutu[this_node]->hou.insert(that_node);
+			liutu[that_node]->qian.insert(this_node);
 		}
-		hangcount++;
+		if (l->num == big_code[i].back()->num&&l->op!="goto")
+		{
+			//i和i+1建立关系
+			liutu[i]->hou.insert(i + 1);
+			liutu[i + 1]->qian.insert(i);
+		}
 	}
 	//计算每个基本快的use和def
 	for (int i = 1; i <= node_count; i++)
@@ -186,13 +204,22 @@ void make_pic()
 		for (gg = l.begin(); gg != l.end(); gg++)
 		{
 			code * ll = *gg;
-			if (ll->op == ":=" || ll->op == "=" || ll->op == "++" || ll->op == "--" || ll->op == "+" || ll->op == "-" || ll->op == "*" || ll->op == "/" || ll->op == "&&" || ll->op == "||" || ll->op == "!")
+			if (ll->op == ":=")
+				liutu[i]->def.insert(ll->result);
+			if (ll->op == "=" || ll->op == "++" || ll->op == "--" || ll->op == "+" || ll->op == "-" || ll->op == "*" || ll->op == "/" || ll->op == "&&" || ll->op == "||" || ll->op == "!")
 			{
-				pn[i]->def.insert(ll->result);
+				liutu[i]->def.insert(ll->result);
 				if (ll->arg1 != -1)
-					pn[i]->use.insert(ll->arg1);
+					liutu[i]->use.insert(ll->arg1);
 				if (ll->arg2 != -1)
-					pn[i]->use.insert(ll->arg2);
+					liutu[i]->use.insert(ll->arg2);
+			}
+			if (ll->op == "'>'" || ll->op == "'<'" || ll->op == "'>='" || ll->op == "'<='" || ll->op == "'=='" || ll->op == "'!='")
+			{
+				if (ll->arg1 != -1)
+					liutu[i]->use.insert(ll->arg1);
+				if (ll->arg2 != -1)
+					liutu[i]->use.insert(ll->arg2);
 			}
 		}
 	}
@@ -201,29 +228,350 @@ void make_pic()
 	while (flag)
 	{
 		flag = false;
-		for (int i = node_count; i >= node_count; i--)
+		for (int i = node_count; i >=1; i--)
 		{
 			//计算out
-			for (set<int>::iterator m = pn[i]->hou.begin(); m != pn[i]->hou.end(); m++)
+			for (set<int>::iterator m = liutu[i]->hou.begin(); m != liutu[i]->hou.end(); m++)
 			{
-				int hou= *m;
-				pn[i]->out.insert(pn[hou]->in.begin(), pn[hou]->in.end());
+				int hou = *m;
+				liutu[i]->out.insert(liutu[hou]->in.begin(), liutu[hou]->in.end());
 			}
 			//计算in
-			int size1 = pn[i]->in.size();
+			int size1 = liutu[i]->in.size();
 			//加入use
-			pn[i]->in.insert(pn[i]->use.begin(), pn[i]->use.end());
+			liutu[i]->in.insert(liutu[i]->use.begin(), liutu[i]->use.end());
 			//out-def
-			pn[i]->out.erase(pn[i]->def.begin(), pn[i]->def.end());
+			for (set<int>::iterator a = liutu[i]->def.begin(); a != liutu[i]->def.end(); a++)
+			{
+				int b = *a;
+				liutu[i]->out.erase(b);
+			}
+			//liutu[i]->out.erase(liutu[i]->def.begin(), liutu[i]->def.end());
 			//加入out
-			pn[i]->in.insert(pn[i]->out.begin(), pn[i]->out.end());
-			int size2 = pn[i]->in.size();
+			liutu[i]->in.insert(liutu[i]->out.begin(), liutu[i]->out.end());
+			int size2 = liutu[i]->in.size();
 			if (size2 != size1)
 				flag = true;
 		}
 	}
 
 }
+void make_assem()
+{
+	o.open("C:\\Users\\daisf\\Documents\\cworkspace\\compiler\\compiler\\huibian.txt");
+	list<code*>::iterator gg;
+	for (int i = 1; i <= node_count; i++)//对每个基本块遍历两次
+	{
+		for (gg = big_code[i].begin(); gg != big_code[i].end(); gg++)//建立每个块的后续引用关系
+		{
+			code * ll = *gg;
+			if (ll->op == ":=" || ll->op == "=" || ll->op == "++" || ll->op == "--" || ll->op == "+" || ll->op == "-" || ll->op == "*" || ll->op == "/" || ll->op == "&&" || ll->op == "||" || ll->op == "!")
+			{
+				if (symbol_map2.find(ll->result) == symbol_map2.end())//不在汇编符号表中
+				{
+					sys * s = new sys(ll->result);
+					symbol_map2.insert(pair<int, sys*>(ll->result, s));
+					//首次出现放到内存中
+				}
+				if (ll->arg1 != -1)
+				{
+					if (symbol_map2.find(ll->arg1) == symbol_map2.end())
+						symbol_map2.insert(pair<int, sys*>(ll->arg1, new sys(ll->arg1)));
+					symbol_map2.find(ll->arg1)->second->yinyong.insert(ll->num);
+				}
+				if (ll->arg2 != -1)
+				{
+					if (symbol_map2.find(ll->arg2) == symbol_map2.end())
+						symbol_map2.insert(pair<int, sys*>(ll->arg2, new sys(ll->arg2)));
+					symbol_map2.find(ll->arg2)->second->yinyong.insert(ll->num);
+				}
+			}
+		}
+
+
+		cout<< to_string(i) + ":";
+		for (gg = big_code[i].begin(); gg != big_code[i].end(); gg++)//生成汇编代码
+		{
+			string s = "";
+			code * ll = *gg;
+			cout<< to_string(ll->num) + ":";
+			o << to_string(ll->num) + ":";
+			//立即数赋值
+			string opl = make_op(ll->op);
+			if (ll->op == ":=") 
+			{
+				//如果a一开始在寄存器中就互删一波
+				int yuan;
+				if(symbol_map2.find(ll->result)!=symbol_map2.end())
+					yuan= *symbol_map2.find(ll->result)->second->address.begin();
+				if (yuan < 0)
+				{
+					o << "MOV " + to_string(ll->result)+to_string(yuan) + '\n';
+					res[-yuan].erase(ll->result);
+					symbol_map2.find(ll->result)->second->address.erase(yuan);
+					symbol_map2.find(ll->result)->second->address.insert(ll->result);
+				}
+				int resl = getres(ll);
+				if (resl < 0)
+				{
+					cout<< "MOV " + to_string(resl) + ",#" + to_string(ll->arg1) + '\n';
+					o << "MOV " + to_string(resl) + ",#" + to_string(ll->arg1) + '\n';//b->寄存器
+					res[-resl].insert(ll->result);//寄+a
+					symbol_map2.find(ll->result)->second->address.insert(resl);
+				}
+				else
+					o << "error1" + '\n';
+				symbol_map2.find(ll->result)->second->address.erase(ll->result);
+			}
+			//=赋值
+			else if(ll->op == "=" )
+			{
+				int yuan;
+				if (symbol_map2.find(ll->result) != symbol_map2.end())
+					yuan = *symbol_map2.find(ll->result)->second->address.begin();
+				if (yuan < 0)
+				{
+					o << "MOV " + to_string(ll->result) + to_string(yuan) + '\n';
+					res[-yuan].erase(ll->result);
+					symbol_map2.find(ll->result)->second->address.erase(yuan);
+					symbol_map2.find(ll->result)->second->address.insert(ll->result);
+				}
+
+				int num = *symbol_map2.find(ll->arg1)->second->address.begin();//arg1所在地址
+				if (num < 0)
+				{
+					res[-num].insert(ll->result);
+					symbol_map2.find(ll->result)->second->address.insert(num);
+					if (liutu[ll->node_num]->out.find(ll->arg1) == liutu[ll->node_num]->out.end() && symbol_map2.find(ll->arg1)->second->yinyong.size() == 1)
+					{
+						cout<< "MOV " + to_string(ll->arg1) + "," + to_string(num) + '\n';
+						o << "MOV " + to_string(ll->arg1)+"," +to_string(num)+'\n';//b->寄存器
+						res[-num].erase(ll->arg1);
+						symbol_map2.find(ll->arg1)->second->address.erase(num);
+						symbol_map2.find(ll->arg1)->second->address.insert(ll->arg1);
+					}
+				}
+				else
+				{
+					int resl = getres(ll);
+					if (resl < 0)
+					{
+						cout<< "MOV " + to_string(resl) + "," + to_string(ll->arg1) + '\n';
+						o << "MOV " + to_string(resl) + "," + to_string(ll->arg1)+'\n';//b->寄存器
+						res[-resl].insert(ll->result);//寄+a
+						symbol_map2.find(ll->result)->second->address.insert(resl);
+					}
+					else
+						o << "error1" + '\n';
+				}
+				symbol_map2.find(ll->result)->second->address.erase(ll->result);
+
+			}
+			//单操作数
+			else if (ll->op == "++"|| ll->op == "--" || ll->op == "!")
+			{
+				int yuan;
+				if (symbol_map2.find(ll->result) != symbol_map2.end())
+					yuan = *symbol_map2.find(ll->result)->second->address.begin();
+				if (yuan < 0)
+				{
+					o << "MOV " + to_string(ll->result) + to_string(yuan) + '\n';
+					res[-yuan].erase(ll->result);
+					symbol_map2.find(ll->result)->second->address.erase(yuan);
+					symbol_map2.find(ll->result)->second->address.insert(ll->result);
+				}
+
+				int add;
+				int resl = getres(ll);//L
+				set<int> t = symbol_map2.find(ll->arg1)->second->address;
+				add = *t.begin();//arg1
+				cout << "MOV " + to_string(add) + "," + to_string(resl) + '\n';
+				o << "MOV " + to_string(add) + "," + to_string(resl) + '\n';
+				cout << opl + " " + to_string(resl) + '\n';
+				o << opl + " " + to_string(resl) + '\n';
+				//记录x在l中
+				symbol_map2.find(ll->result)->second->address.insert(resl);
+				//如果l为寄存器记录该寄存器存有x
+				if (resl < 0)
+					res[-resl].insert(ll->result);
+				else
+					o << "error2" + '\n';
+				if (ll->arg1!=ll->result&&symbol_map2.find(ll->arg1)->second->yinyong.size() == 1 && liutu[ll->node_num]->out.find(ll->arg1) == liutu[ll->node_num]->out.end())
+				{
+					int jicunqi = *symbol_map2.find(ll->arg1)->second->address.begin();
+					if (jicunqi < 0)
+					{
+						res[-jicunqi].erase(ll->arg1);
+						symbol_map2.find(ll->arg1)->second->address.erase(jicunqi);
+					}
+				}
+
+				symbol_map2.find(ll->result)->second->address.erase(ll->result);
+			}
+			//多操作数
+			else if (ll->op == "+"|| ll->op == "-" || ll->op == "*" || ll->op == "/" || ll->op == "&&" || ll->op == "||")
+			{
+				int yuan;
+				if (symbol_map2.find(ll->result) != symbol_map2.end())
+					yuan = *symbol_map2.find(ll->result)->second->address.begin();
+				if (yuan < 0)
+				{
+					if (ll->result != ll->arg1)
+					{
+						cout << "MOV " + to_string(ll->result) + "," + to_string(yuan) + '\n';
+						o << "MOV " + to_string(ll->result) + "," + to_string(yuan) + '\n';
+						res[-yuan].erase(ll->result);
+						symbol_map2.find(ll->result)->second->address.erase(yuan);
+						symbol_map2.find(ll->result)->second->address.insert(ll->result);
+					}
+				}
+
+				int add;
+				set<int> t;
+				int resl = yuan;
+				if (ll->result != ll->arg1&&yuan>=0)
+				{
+					resl = getres(ll);//L
+					t = symbol_map2.find(ll->arg1)->second->address;
+					add = *t.begin();//arg1
+					if (add != resl)//找到地址不是arg1地址
+					{
+						cout << "MOV " + to_string(resl) + "," + to_string(add) + '\n';// mov 目的 源
+						o << "MOV " + to_string(resl) + "," + to_string(add) + '\n';
+					}
+				}
+				
+				t = symbol_map2.find(ll->arg2)->second->address;
+				add = *t.begin();
+				cout << opl + " " + to_string(resl) + ","  + to_string(add) + '\n';
+				o << opl + " " + to_string(resl) + "," + to_string(add) + '\n';
+				//记录x在l中
+				symbol_map2.find(ll->result)->second->address.insert(resl);
+				//如果l为寄存器记录该寄存器存有x
+				if (resl < 0)
+					res[-resl].insert(ll->result);
+				else
+					o << "error3" + '\n';
+				if (ll->arg1!=ll->result&&symbol_map2.find(ll->arg1)->second->yinyong.size() == 1&& liutu[ll->node_num]->out.find(ll->arg1) == liutu[ll->node_num]->out.end())
+				{
+					int jicunqi = *symbol_map2.find(ll->arg1)->second->address.begin();
+					if (jicunqi < 0)
+					{
+						res[-jicunqi].erase(ll->arg1);
+						symbol_map2.find(ll->arg1)->second->address.erase(jicunqi);
+					}
+				}
+
+				if (ll->arg2!=ll->result&&symbol_map2.find(ll->arg2)->second->yinyong.size() == 1 && liutu[ll->node_num]->out.find(ll->arg2) == liutu[ll->node_num]->out.end())
+				{
+					int jicunqi = *symbol_map2.find(ll->arg2)->second->address.begin();
+					if (jicunqi < 0)
+					{
+						res[-jicunqi].erase(ll->arg2);
+						symbol_map2.find(ll->arg2)->second->address.erase(jicunqi);
+					}
+				}
+
+				symbol_map2.find(ll->result)->second->address.erase(ll->result);
+			}
+			//goto
+			else if (ll->op == "goto")
+			{
+				cout << "JMP " + to_string(ll->result) + '\n';
+				o << "JMP " + to_string(ll->result) + '\n';
+			}
+			//logic_op
+			else if (ll->op == "'>='"|| ll->op == "'<='"|| ll->op == "'>'"|| ll->op == "'<'"|| ll->op == "'=='"|| ll->op == "'!='")
+			{
+				int s1=0;
+				int s2=0;
+				s1 = *symbol_map2.find(ll->arg1)->second->address.begin();
+				s2 = *symbol_map2.find(ll->arg2)->second->address.begin();
+
+				cout << "CMP " + to_string(s1) + "," + to_string(s2) + '\n';
+				o << "CMP " + to_string(s1) + "," + to_string(s2) + '\n';
+				cout << "CJ " + to_string(ll->result) + '\n';
+				o << "CJ "+to_string(ll->result)+'\n';
+			}
+			//删除引用链中的信息
+			if (ll->op != ":=")
+			{
+				if (ll->arg1 != -1)
+					symbol_map2.find(ll->arg1)->second->yinyong.erase(ll->num);
+				if (ll->arg2 != -1)
+					symbol_map2.find(ll->arg2)->second->yinyong.erase(ll->num);
+			}
+
+		}
+	}
+	o.close();
+}
+int getres(code * l)
+{
+	if (l->op != ":=")
+		if (symbol_map2.find(l->arg1)->second->address.size() != 0)//1
+		{
+			int h = *symbol_map2.find(l->arg1)->second->address.begin();
+			//if (h < 0 && res[-h].size()==1&&liutu[l->node_num]->out.find(l->arg1)==liutu[l->node_num]->out.end())//在寄存器里1并且y不活跃
+			//	return h;
+			if (h < 0 && res[-h].size() == 1 && liutu[l->node_num]->out.find(l->arg1) == liutu[l->node_num]->out.end() && symbol_map2.find(l->arg1)->second->yinyong.size() == 1)//在寄存器里1并且y不活跃
+			{
+				cout << "MOV " + to_string(l->arg1) + to_string(h) + '\n';
+				o << "MOV " + to_string(l->arg1) + to_string(h) + '\n';
+				symbol_map2.find(l->arg1)->second->address.erase(h);
+				symbol_map2.find(l->arg1)->second->address.insert(l->arg1);
+				res[-h].erase(l->arg1);
+				return h;
+			}
+		}
+
+	for (int i = 1; i <= 16; i++)//2
+		if (res[i].size() == 0)
+			return (-i);
+
+	if (symbol_map2.find(l->result)->second->yinyong.size() != 0)//3
+	{
+		//int yb = find_node.find(*symbol_map2.find(l->result)->second->yinyong.begin())->second;
+		int max = 0;
+		int maxnum = 0;
+		//if (yb == find_node.find(l->num)->second)//本块中还会被引用
+		if (symbol_map2.find(l->result)->second->yinyong.size() != 0)
+		{
+			for (int j = 1; j <= 16; j++)
+			{
+				set<int> cl = symbol_map2.find(*res[j].begin())->second->yinyong;
+				if (cl.size() == 0)//---------------------------------------------把他们都写回到内存中
+				{
+					cout<< "MOV " + to_string(*res[j].begin()) + to_string(j) + '\n';
+					o << "MOV " + to_string(*res[j].begin()) + to_string(j) + '\n';
+					symbol_map2.find(*res[j].begin())->second->address.erase(j);
+					symbol_map2.find(*res[j].begin())->second->address.insert(*res[j].begin());
+					res[j].erase(*res[j].begin());
+					return (-j);
+				}
+				else if (*cl.begin() > maxnum)
+				{
+					maxnum = *cl.begin();
+					max = j;
+				}
+			}
+			set<int>::iterator mm;
+			for (mm = res[max].begin(); mm != res[max].end(); mm++)
+			{
+				cout<< "MOV " + to_string(*mm) + to_string(max) + '\n';
+				o << "MOV " + to_string(*mm) + to_string(max) + '\n';
+				symbol_map2.find(*mm)->second->address.erase(max);
+				symbol_map2.find(*mm)->second->address.insert(*mm);
+			}
+			res[max].clear();
+			return (-max);//-----------------------------------写回
+		}
+	}
+
+	return l->result;
+
+}
+
 void xpush(int m[2])
 {
 	top++;
@@ -667,7 +1015,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	//if_statement
 	else if (guiyueshi == "if_statement->if logic codeblockplus")
 	{
-		code * temp_code0 = new code(-2, "==", x[top - 1]->addr, 1);   //0
+		code * temp_code0 = new code(-2, "'=='", x[top - 1]->addr, 1);   //0
 		gencode(temp_code0);
 		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 1), "goto", -1, -1); //1
 																	 //s.code.begin //2
@@ -681,7 +1029,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	}
 	else if (guiyueshi == "if_statement->if logic codeblockplus else codeblockplus")
 	{
-		code* temp_code0 = new code(-2, "==", x[top - 3]->addr, 1); 
+		code* temp_code0 = new code(-2, "'=='", x[top - 3]->addr, 1); 
 		gencode(temp_code0);
 		code * temp_code1 = new code(-(int)(2 + x[top - 2]->codel.size()), "goto", -1, -1);
 		gencode(temp_code1);
@@ -700,7 +1048,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	//while_statement
 	else if (guiyueshi == "while_statement->while '(' logic ')' codeblockplus")
 	{
-		code * temp_code0 = new code(-2, "==", x[top - 2]->addr, 1);
+		code * temp_code0 = new code(-2, "'=='", x[top - 2]->addr, 1);
 		gencode(temp_code0);
 		code * temp_code1 = new code(-(int)(x[top]->codel.size() + 2), "goto", -1, -1);
 		gencode(temp_code1);
@@ -717,7 +1065,7 @@ void semantics(string guiyueshi, gloable_variable *l)
 	}
 	else if (guiyueshi == "for_statement->for '(' assign_statement ';' logic ';' assign_statement ')' codeblockplus")
 	{
-		code * temp_code0 = new code(-2,"==",x[top-4]->addr,1);
+		code * temp_code0 = new code(-2,"'=='",x[top-4]->addr,1);
 		gencode(temp_code0);
 		code * temp_code1 = new code(-(int)(x[top]->codel.size()+x[top-2]->codel.size() + 2), "goto", -1, -1);
 		gencode(temp_code1);
@@ -792,6 +1140,42 @@ void mergel()
 		num++;
 	}
 	o.close();
+}
+
+string make_op(string op)
+{
+	string s;
+	if (op == "+")
+		s= "ADD";
+	else if (op == "-")
+		s= "SUB";
+	else if (op == "*")
+		s= "MUL";
+	else if (op == "/")
+		s= "DIV";
+	else if (op == "++")
+		s= "INC";
+	else if (op == "--")
+		s= "DEC";
+	else if (op == "'>'")
+		s= "GT";
+	else if (op == "'<'")
+		s= "LT";
+	else if (op == "'>='")
+		s= "GE";
+	else if (op == "'<='")
+		s= "LE";
+	else if (op == "'=='")
+		s= "EQ";
+	else if (op == "'!='")
+		s= "NE";
+	else if (op == "||")
+		s= "OR";
+	else if (op == "&&")
+		s= "AND";
+	else if (op == "!")
+		s= "NOT";
+	return s;
 }
 /*
 {

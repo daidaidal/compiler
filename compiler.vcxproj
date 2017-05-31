@@ -121,11 +121,12 @@
     <ClCompile Include="parser.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <Text Include="debug.txt" />
+    <Text Include="huibian.txt" />
     <Text Include="input.txt" />
     <Text Include="newwenfa.txt" />
+    <Text Include="quatriple.txt" />
     <Text Include="question.txt" />
-    <Text Include="yuanshiwenfa.txt" />
-    <Text Include="for_temp.txt" />
     <Text Include="mywenfa.txt" />
     <Text Include="bookwenfa.txt" />
     <Text Include="test_first.txt" />
